@@ -1,0 +1,45 @@
+{
+  "github": {
+    "token": "",
+    "fetch_interval_hours": 24,
+    "max_repos_per_fetch": 50,
+    "trending_languages": ["python", "javascript", "typescript", "go", "rust"],
+    "min_stars": 100,
+    "growth_period": "daily"
+  },
+  "llm": {
+    "provider": "volcengine",
+    "base_url": "https://ark.cn-beijing.volces.com/api/v3",
+    "api_key": "",
+    "model": "GLM-4.7",
+    "temperature": 0.7,
+    "max_tokens": 4096
+  },
+  "evaluation": {
+    "top_n": 10,
+    "weights": {
+      "rule_match": 0.3,
+      "star_threshold": 0.2,
+      "growth_speed": 0.2,
+      "learning_value": 0.3
+    }
+  },
+  "output": {
+    "save_dir": "",
+    "format": "markdown",
+    "filename_template": "github_trending_{date}.md"
+  },
+  "scheduler": {
+    "enabled": true,
+    "run_time": "09:00",
+    "timezone": "Asia/Shanghai"
+  },
+  "autostart": {
+    "enabled": false
+  },
+  "app": {
+    "theme": "system",
+    "language": "zh_CN",
+    "minimize_to_tray": true
+  }
+}

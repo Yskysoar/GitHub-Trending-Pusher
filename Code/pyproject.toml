@@ -1,0 +1,10 @@
+[project]
+name = "github-trending-pusher"
+version = "1.0.0"
+description = "GitHub热点推送 - 桌面端自动化工具"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.backends._legacy:_Backend"

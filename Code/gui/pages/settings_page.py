@@ -155,7 +155,7 @@ class SettingsPage(ctk.CTkScrollableFrame):
         self._custom_model_entry.pack(side="left", padx=8)
 
         self._model_hint_label = ctk.CTkLabel(
-            frame, text="提示：输入API Key后点击"获取模型"可加载可用模型列表，也可直接在"自定义模型"中输入",
+            frame, text='提示：输入API Key后点击「获取模型」可加载可用模型列表，也可直接在「自定义模型」中输入',
             font=ctk.CTkFont(size=11),
             text_color=("gray50", "gray200"),
         )

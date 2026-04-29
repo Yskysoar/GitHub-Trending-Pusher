@@ -4,7 +4,7 @@ from gui.theme import (
     make_font,
     PRIMARY, PRIMARY_DARK, ERROR as RED, ACCENT_RED,
     CARD_BG, BORDER, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_HINT,
-    FONT_BODY, FONT_CAPTION, FONT_ICON_MD, CORNER_RADIUS_CARD,
+    FONT_BODY, FONT_CAPTION, FONT_ICON_MD, CORNER_RADIUS_CARD, PAGE_BG,
 )
 from gui.components.widgets import RuleCard, PageHeader, PageDivider
 from service.rule_service import RuleService
@@ -14,7 +14,7 @@ class RulesPage(ctk.CTkScrollableFrame):
     """规则管理页面。"""
 
     def __init__(self, master, rule_svc: RuleService, **kwargs):
-        super().__init__(master, **kwargs)
+        super().__init__(master, fg_color=PAGE_BG, **kwargs)
         self._svc = rule_svc
         self._build_ui()
 

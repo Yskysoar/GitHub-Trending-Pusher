@@ -48,8 +48,8 @@ class App(ctk.CTk):
         self._current_page: str = ""
 
         self.title("GitHub \u70ED\u70B9\u63A8\u9001")
-        self.geometry("960x640")
-        self.minsize(800, 500)
+        self.geometry("1080x720")
+        self.minsize(900, 600)
 
         theme = self._settings.get("app.theme", "system")
         ctk.set_appearance_mode(theme)

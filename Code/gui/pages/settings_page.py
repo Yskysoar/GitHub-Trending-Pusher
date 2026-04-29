@@ -8,7 +8,7 @@ from gui.theme import (
     CARD_BG, CARD_HOVER, BORDER, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_HINT,
     ACCENT_GREEN, ACCENT_PURPLE, ACCENT_RED, ACCENT_ORANGE,
     FONT_BODY, FONT_CAPTION, FONT_BTN, FONT_BTN_BOLD,
-    CORNER_RADIUS_CARD, CORNER_RADIUS_BTN,
+    CORNER_RADIUS_CARD, CORNER_RADIUS_BTN, PAGE_BG,
     SECTION_COLORS, SECTION_ICONS,
 )
 from gui.components.widgets import SectionCard, FieldRow, PageHeader, PageDivider
@@ -19,7 +19,7 @@ class SettingsPage(ctk.CTkScrollableFrame):
     """系统设置页面。"""
 
     def __init__(self, master, settings_svc: SettingsService, **kwargs):
-        super().__init__(master, **kwargs)
+        super().__init__(master, fg_color=PAGE_BG, **kwargs)
         self._svc = settings_svc
         self._fetched_models: list[str] = []
         self._api_key_visible = False

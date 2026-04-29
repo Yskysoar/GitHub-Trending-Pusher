@@ -5,7 +5,7 @@ from gui.theme import (
     PRIMARY, PRIMARY_DARK, SUCCESS, WARNING, ERROR,
     CARD_BG, BORDER, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_HINT,
     FONT_BODY, FONT_CAPTION, FONT_SECTION, FONT_STAT_TITLE,
-    CORNER_RADIUS_CARD, CORNER_RADIUS_BTN,
+    CORNER_RADIUS_CARD, CORNER_RADIUS_BTN, PAGE_BG,
 )
 from gui.components.widgets import StatCard, RepoListItem, PageHeader, PageDivider
 from service.dashboard_service import DashboardService
@@ -15,7 +15,7 @@ class DashboardPage(ctk.CTkScrollableFrame):
     """仪表盘页面。"""
 
     def __init__(self, master, dashboard_svc: DashboardService, **kwargs):
-        super().__init__(master, **kwargs)
+        super().__init__(master, fg_color=PAGE_BG, **kwargs)
         self._svc = dashboard_svc
         self._build_ui()
 

@@ -4,7 +4,7 @@ from gui.theme import (
     make_font,
     PRIMARY, PRIMARY_DARK, ERROR as RED, ACCENT_RED,
     CARD_BG, BORDER, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_HINT,
-    FONT_BODY, FONT_CAPTION, FONT_LIST_TITLE, CORNER_RADIUS_CARD,
+    FONT_BODY, FONT_CAPTION, FONT_LIST_TITLE, CORNER_RADIUS_CARD, PAGE_BG,
 )
 from gui.components.widgets import PageHeader, PageDivider
 from service.history_service import HistoryService
@@ -14,7 +14,7 @@ class HistoryPage(ctk.CTkScrollableFrame):
     """历史记录页面。"""
 
     def __init__(self, master, history_svc: HistoryService, **kwargs):
-        super().__init__(master, **kwargs)
+        super().__init__(master, fg_color=PAGE_BG, **kwargs)
         self._svc = history_svc
         self._current_page = 1
         self._page_size = 10

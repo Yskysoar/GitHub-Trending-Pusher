@@ -5,6 +5,7 @@ from gui.theme import (
     CARD_BG, BORDER, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_HINT,
     FONT_SECTION, FONT_BODY, FONT_CAPTION, FONT_STAT_VALUE, FONT_STAT_TITLE,
     CORNER_RADIUS_CARD, CORNER_RADIUS_BTN, ACCENT_GREEN, ACCENT_RED,
+    make_font,
 )
 
 
@@ -25,7 +26,7 @@ class SectionCard(ctk.CTkFrame):
 
         ctk.CTkLabel(
             header, text=f"{icon}  {title}" if icon else title,
-            font=FONT_SECTION, text_color=TEXT_PRIMARY,
+            font=make_font(FONT_SECTION), text_color=TEXT_PRIMARY,
         ).pack(side="left")
 
         self._body = ctk.CTkFrame(self, fg_color="transparent")
@@ -44,7 +45,7 @@ class FieldRow(ctk.CTkFrame):
         self.pack(fill="x", pady=3)
 
         ctk.CTkLabel(
-            self, text=label, font=FONT_BODY,
+            self, text=label, font=make_font(FONT_BODY),
             text_color=TEXT_PRIMARY, width=label_width, anchor="w",
         ).pack(side="left")
 
@@ -68,13 +69,13 @@ class StatCard(ctk.CTkFrame):
         top_bar.pack(fill="x", padx=12, pady=(0, 0))
 
         self._title_label = ctk.CTkLabel(
-            self, text=title, font=FONT_STAT_TITLE,
+            self, text=title, font=make_font(FONT_STAT_TITLE),
             text_color=TEXT_SECONDARY,
         )
         self._title_label.pack(pady=(10, 2), padx=16)
 
         self._value_label = ctk.CTkLabel(
-            self, text=value, font=FONT_STAT_VALUE,
+            self, text=value, font=make_font(FONT_STAT_VALUE),
             text_color=TEXT_PRIMARY,
         )
         self._value_label.pack(pady=(2, 12), padx=16)
@@ -102,7 +103,7 @@ class RepoListItem(ctk.CTkFrame):
         rank_label.pack(side="left")
 
         name_label = ctk.CTkLabel(
-            row, text=full_name, font=FONT_BODY, anchor="w",
+            row, text=full_name, font=make_font(FONT_BODY), anchor="w",
             text_color=TEXT_PRIMARY,
         )
         name_label.pack(side="left", fill="x", expand=True, padx=(4, 8))
@@ -110,21 +111,21 @@ class RepoListItem(ctk.CTkFrame):
         if stars_growth > 0:
             growth_label = ctk.CTkLabel(
                 row, text=f"+{stars_growth}",
-                font=FONT_CAPTION,
+                font=make_font(FONT_CAPTION),
                 text_color=(ACCENT_GREEN, SUCCESS),
             )
             growth_label.pack(side="left", padx=4)
 
         score_label = ctk.CTkLabel(
             row, text=f"{eval_score:.0f}pts",
-            font=FONT_CAPTION,
+            font=make_font(FONT_CAPTION),
             text_color=(PRIMARY_DARK, PRIMARY),
         )
         score_label.pack(side="left", padx=4)
 
         if language:
             lang_label = ctk.CTkLabel(
-                row, text=language, font=FONT_CAPTION,
+                row, text=language, font=make_font(FONT_CAPTION),
                 text_color=TEXT_SECONDARY,
             )
             lang_label.pack(side="left", padx=4)
@@ -160,16 +161,16 @@ class RuleCard(ctk.CTkFrame):
         btn_frame.pack(side="right")
 
         self._edit_btn = ctk.CTkButton(
-            btn_frame, text="编辑", width=56, height=26,
-            font=FONT_CAPTION, fg_color="transparent",
+            btn_frame, text="\u7F16\u8F91", width=56, height=26,
+            font=make_font(FONT_CAPTION), fg_color="transparent",
             border_width=1, border_color=BORDER,
             text_color=TEXT_PRIMARY, hover_color=CARD_BG,
         )
         self._edit_btn.pack(side="left", padx=2)
 
         self._delete_btn = ctk.CTkButton(
-            btn_frame, text="删除", width=56, height=26,
-            font=FONT_CAPTION,
+            btn_frame, text="\u5220\u9664", width=56, height=26,
+            font=make_font(FONT_CAPTION),
             fg_color=(ACCENT_RED, "#b62324"),
             hover_color=(ERROR, ACCENT_RED),
         )
@@ -181,16 +182,16 @@ class RuleCard(ctk.CTkFrame):
         else:
             kw_text = str(keywords)
         ctk.CTkLabel(
-            self, text=f"关键词: {kw_text}",
-            font=FONT_CAPTION, anchor="w", text_color=TEXT_SECONDARY,
+            self, text=f"\u5173\u952E\u8BCD: {kw_text}",
+            font=make_font(FONT_CAPTION), anchor="w", text_color=TEXT_SECONDARY,
         ).pack(fill="x", padx=16, pady=1)
 
         topics = self._rule_data.get("topics", [])
         if isinstance(topics, list) and topics:
             topics_text = ", ".join(topics)
             ctk.CTkLabel(
-                self, text=f"主题: {topics_text}",
-                font=FONT_CAPTION, anchor="w", text_color=TEXT_SECONDARY,
+                self, text=f"\u4E3B\u9898: {topics_text}",
+                font=make_font(FONT_CAPTION), anchor="w", text_color=TEXT_SECONDARY,
             ).pack(fill="x", padx=16, pady=1)
 
         detail_frame = ctk.CTkFrame(self, fg_color="transparent")
@@ -199,14 +200,14 @@ class RuleCard(ctk.CTkFrame):
         language = self._rule_data.get("language", "")
         if language:
             ctk.CTkLabel(
-                detail_frame, text=f"语言: {language}",
-                font=FONT_CAPTION, text_color=TEXT_HINT,
+                detail_frame, text=f"\u8BED\u8A00: {language}",
+                font=make_font(FONT_CAPTION), text_color=TEXT_HINT,
             ).pack(side="left")
 
         ctk.CTkLabel(
             detail_frame,
-            text=f"优先级: {self._rule_data.get('priority', 5)}/10",
-            font=FONT_CAPTION, text_color=TEXT_HINT,
+            text=f"\u4F18\u5148\u7EA7: {self._rule_data.get('priority', 5)}/10",
+            font=make_font(FONT_CAPTION), text_color=TEXT_HINT,
         ).pack(side="left", padx=8)
 
     @property
@@ -225,7 +226,7 @@ class RuleCard(ctk.CTkFrame):
 class ProgressDialog(ctk.CTkToplevel):
     """进度对话框。"""
 
-    def __init__(self, master, title: str = "执行中...", **kwargs):
+    def __init__(self, master, title: str = "\u6267\u884C\u4E2D...", **kwargs):
         super().__init__(master, **kwargs)
         self.title(title)
         self.geometry("400x150")
@@ -234,7 +235,7 @@ class ProgressDialog(ctk.CTkToplevel):
         self.grab_set()
 
         self._label = ctk.CTkLabel(
-            self, text="正在执行...", font=FONT_BODY,
+            self, text="\u6B63\u5728\u6267\u884C...", font=make_font(FONT_BODY),
         )
         self._label.pack(pady=(20, 10), padx=20)
 
@@ -255,7 +256,7 @@ class ProgressDialog(ctk.CTkToplevel):
 class MessageBox(ctk.CTkToplevel):
     """自定义消息弹窗。"""
 
-    def __init__(self, master, title: str = "提示", message: str = "",
+    def __init__(self, master, title: str = "\u63D0\u793A", message: str = "",
                  icon: str = "info", **kwargs):
         super().__init__(master, **kwargs)
         self.title(title)
@@ -286,14 +287,14 @@ class MessageBox(ctk.CTkToplevel):
         ).pack(expand=True)
 
         ctk.CTkLabel(
-            content, text=message, font=FONT_BODY,
+            content, text=message, font=make_font(FONT_BODY),
             wraplength=250, justify="left",
             text_color=TEXT_PRIMARY,
         ).pack(side="left", fill="both", expand=True)
 
         ctk.CTkButton(
-            self, text="确定", width=80, height=BTN_HEIGHT if False else 30,
-            font=FONT_BODY, fg_color=PRIMARY_DARK, hover_color=PRIMARY,
+            self, text="\u786E\u5B9A", width=80, height=30,
+            font=make_font(FONT_BODY), fg_color=PRIMARY_DARK, hover_color=PRIMARY,
             command=self._on_close,
         ).pack(pady=(0, 16))
 
@@ -318,7 +319,7 @@ class PageHeader(ctk.CTkFrame):
         if subtitle:
             ctk.CTkLabel(
                 self, text=subtitle,
-                font=FONT_CAPTION, text_color=TEXT_SECONDARY,
+                font=make_font(FONT_CAPTION), text_color=TEXT_SECONDARY,
             ).pack(side="left", padx=(12, 0), pady=(6, 0))
 
         self._right_frame = ctk.CTkFrame(self, fg_color="transparent")

@@ -14,6 +14,7 @@ from gui.theme import (
     FONT_NAV, FONT_SIDEBAR_TITLE, FONT_STATUS, FONT_BTN_BOLD,
     CORNER_RADIUS_CARD, CORNER_RADIUS_BTN,
     SIDEBAR_WIDTH, STATUSBAR_HEIGHT,
+    make_font,
 )
 from gui.components.widgets import ProgressDialog
 from service.dashboard_service import DashboardService
@@ -88,7 +89,7 @@ class App(ctk.CTk):
 
         ctk.CTkLabel(
             self._sidebar, text="GitHub \u70ED\u70B9\u63A8\u9001",
-            font=FONT_CAPTION, text_color=TEXT_HINT,
+            font=make_font(FONT_CAPTION), text_color=TEXT_HINT,
         ).pack(anchor="w", padx=16, pady=(0, 16))
 
         sep = ctk.CTkFrame(self._sidebar, height=1, fg_color=DIVIDER)
@@ -98,7 +99,7 @@ class App(ctk.CTk):
         for key, label in NAV_ITEMS:
             btn = ctk.CTkButton(
                 self._sidebar, text=label,
-                font=FONT_NAV, anchor="w",
+                font=make_font(FONT_NAV), anchor="w",
                 fg_color="transparent",
                 text_color=TEXT_SECONDARY,
                 hover_color=CARD_BG,
@@ -114,7 +115,7 @@ class App(ctk.CTk):
 
         self._run_btn = ctk.CTkButton(
             self._sidebar, text="\u25B6  \u7ACB\u5373\u6267\u884C",
-            font=FONT_BTN_BOLD,
+            font=make_font(FONT_BTN_BOLD),
             fg_color=PRIMARY_DARK, hover_color=PRIMARY,
             corner_radius=CORNER_RADIUS_BTN,
             height=36,
@@ -124,7 +125,7 @@ class App(ctk.CTk):
 
         self._scheduler_label = ctk.CTkLabel(
             self._sidebar, text="",
-            font=FONT_CAPTION, text_color=TEXT_HINT,
+            font=make_font(FONT_CAPTION), text_color=TEXT_HINT,
         )
         self._scheduler_label.pack(anchor="w", padx=16, pady=(4, 0))
 
@@ -145,13 +146,13 @@ class App(ctk.CTk):
 
         self._status_label = ctk.CTkLabel(
             self._statusbar, text="\u5C31\u7EEA",
-            font=FONT_STATUS, text_color=TEXT_HINT,
+            font=make_font(FONT_STATUS), text_color=TEXT_HINT,
         )
         self._status_label.pack(side="left", padx=12)
 
         self._status_right = ctk.CTkLabel(
             self._statusbar, text="",
-            font=FONT_STATUS, text_color=TEXT_HINT,
+            font=make_font(FONT_STATUS), text_color=TEXT_HINT,
         )
         self._status_right.pack(side="right", padx=12)
 
@@ -244,7 +245,7 @@ class App(ctk.CTk):
         ).pack(side="left")
         ctk.CTkLabel(
             dialog, text="\u4E3A\u4E86\u6B63\u5E38\u4F7F\u7528\uFF0C\u8BF7\u5B8C\u6210\u4EE5\u4E0B\u914D\u7F6E\uFF1A",
-            font=FONT_BODY, text_color=TEXT_SECONDARY,
+            font=make_font(FONT_BODY), text_color=TEXT_SECONDARY,
         ).pack(anchor="w", padx=24, pady=(0, 12))
 
         ctk.CTkLabel(dialog, text="1. GitHub Personal Access Token",
@@ -259,7 +260,7 @@ class App(ctk.CTk):
 
         provider_frame = ctk.CTkFrame(dialog, fg_color="transparent")
         provider_frame.pack(fill="x", padx=24, pady=(0, 4))
-        ctk.CTkLabel(provider_frame, text="\u4EE3\u7406\u5382\u5BB6", font=FONT_BODY, width=70).pack(side="left")
+        ctk.CTkLabel(provider_frame, text="\u4EE3\u7406\u5382\u5BB6", font=make_font(FONT_BODY), width=70).pack(side="left")
         providers = self._settings.llm_providers
         provider_names = [info.get("name", key) for key, info in providers.items()]
         provider_menu = ctk.CTkOptionMenu(provider_frame, values=provider_names, width=180,
@@ -285,14 +286,14 @@ class App(ctk.CTk):
 
         key_frame = ctk.CTkFrame(dialog, fg_color="transparent")
         key_frame.pack(fill="x", padx=24, pady=(0, 4))
-        ctk.CTkLabel(key_frame, text="API Key", font=FONT_BODY, width=70).pack(side="left")
+        ctk.CTkLabel(key_frame, text="API Key", font=make_font(FONT_BODY), width=70).pack(side="left")
         key_entry = ctk.CTkEntry(key_frame, show="\u2022", width=370)
         key_entry.pack(side="left")
 
         create_demo_var = ctk.BooleanVar(value=True)
         ctk.CTkCheckBox(
             dialog, text="\u521B\u5EFA\u793A\u4F8B\u63A8\u9001\u89C4\u5219\uFF08AI\u5927\u6A21\u578B\u65B9\u5411\uFF09",
-            variable=create_demo_var, font=FONT_BODY, text_color=TEXT_PRIMARY,
+            variable=create_demo_var, font=make_font(FONT_BODY), text_color=TEXT_PRIMARY,
         ).pack(padx=24, pady=8, anchor="w")
 
         btn_frame = ctk.CTkFrame(dialog, fg_color="transparent")
@@ -349,7 +350,7 @@ class App(ctk.CTk):
         ctk.CTkButton(btn_frame, text="\u7A0D\u540E\u914D\u7F6E", command=on_skip, width=110, height=34,
                        fg_color="transparent", border_width=1, border_color=BORDER,
                        text_color=TEXT_PRIMARY, hover_color=CARD_BG,
-                       font=FONT_BODY).pack(side="left", padx=8)
+                       font=make_font(FONT_BODY)).pack(side="left", padx=8)
         ctk.CTkButton(btn_frame, text="\u5F00\u59CB\u4F7F\u7528", command=on_start, width=110, height=34,
                        fg_color=PRIMARY_DARK, hover_color=PRIMARY,
-                       font=FONT_BTN_BOLD).pack(side="left", padx=8)
+                       font=make_font(FONT_BTN_BOLD)).pack(side="left", padx=8)

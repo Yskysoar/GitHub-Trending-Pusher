@@ -1,6 +1,7 @@
 import customtkinter as ctk
 
 from gui.theme import (
+    make_font,
     PRIMARY, PRIMARY_DARK, ERROR as RED, ACCENT_RED,
     CARD_BG, BORDER, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_HINT,
     FONT_BODY, FONT_CAPTION, CORNER_RADIUS_CARD,
@@ -21,7 +22,7 @@ class RulesPage(ctk.CTkScrollableFrame):
         header = PageHeader(self, "推送规则", "管理关键词匹配规则")
         ctk.CTkButton(
             header.right_frame, text="+ 新建规则", width=100, height=30,
-            font=FONT_BODY, fg_color=PRIMARY_DARK, hover_color=PRIMARY,
+            font=make_font(FONT_BODY), fg_color=PRIMARY_DARK, hover_color=PRIMARY,
             command=self._show_add_dialog,
         ).pack(side="right")
         PageDivider(self)
@@ -38,7 +39,7 @@ class RulesPage(ctk.CTkScrollableFrame):
             ctk.CTkLabel(
                 self._rules_frame,
                 text="暂无规则，点击右上角「新建规则」添加",
-                font=FONT_BODY, text_color=TEXT_HINT,
+                font=make_font(FONT_BODY), text_color=TEXT_HINT,
             ).pack(pady=40)
             return
 
@@ -76,7 +77,7 @@ class RulesPage(ctk.CTkScrollableFrame):
         form.pack(fill="both", expand=True, padx=20)
 
         def _add_field(label, placeholder="", default=""):
-            ctk.CTkLabel(form, text=label, font=FONT_CAPTION, anchor="w",
+            ctk.CTkLabel(form, text=label, font=make_font(FONT_CAPTION), anchor="w",
                          text_color=TEXT_SECONDARY).pack(fill="x", pady=(4, 2))
             entry = ctk.CTkEntry(form, placeholder_text=placeholder, height=30)
             entry.pack(fill="x", pady=(0, 6))
@@ -95,11 +96,11 @@ class RulesPage(ctk.CTkScrollableFrame):
         min_stars_entry = _add_field("最低Star数（0=使用全局配置）", "0",
                                      str(rule_data.get("min_stars", 0)) if rule_data else "")
 
-        ctk.CTkLabel(form, text="优先级（1-10）", font=FONT_CAPTION, anchor="w",
+        ctk.CTkLabel(form, text="优先级（1-10）", font=make_font(FONT_CAPTION), anchor="w",
                      text_color=TEXT_SECONDARY).pack(fill="x", pady=(4, 2))
         priority_slider = ctk.CTkSlider(form, from_=1, to=10, number_of_steps=9)
         priority_slider.pack(fill="x", pady=(0, 4))
-        priority_label = ctk.CTkLabel(form, text="5", font=FONT_CAPTION, text_color=TEXT_HINT)
+        priority_label = ctk.CTkLabel(form, text="5", font=make_font(FONT_CAPTION), text_color=TEXT_HINT)
         priority_label.pack(anchor="w")
         priority_val = rule_data.get("priority", 5) if rule_data else 5
         priority_slider.set(priority_val)
@@ -107,7 +108,7 @@ class RulesPage(ctk.CTkScrollableFrame):
 
         enabled_var = ctk.BooleanVar(value=rule_data.get("enabled", True) if rule_data else True)
         ctk.CTkCheckBox(form, text="启用规则", variable=enabled_var,
-                        font=FONT_BODY, text_color=TEXT_PRIMARY).pack(anchor="w", pady=8)
+                        font=make_font(FONT_BODY), text_color=TEXT_PRIMARY).pack(anchor="w", pady=8)
 
         btn_frame = ctk.CTkFrame(dialog, fg_color="transparent")
         btn_frame.pack(pady=12)
@@ -147,14 +148,14 @@ class RulesPage(ctk.CTkScrollableFrame):
                 dialog.destroy()
             except Exception as e:
                 ctk.CTkLabel(dialog, text=f"保存失败: {e}", text_color=RED,
-                             font=FONT_CAPTION).pack()
+                             font=make_font(FONT_CAPTION)).pack()
 
         ctk.CTkButton(btn_frame, text="取消", command=on_cancel, width=100, height=30,
                        fg_color="transparent", border_width=1, border_color=BORDER,
-                       text_color=TEXT_PRIMARY, font=FONT_BODY).pack(side="left", padx=8)
+                       text_color=TEXT_PRIMARY, font=make_font(FONT_BODY)).pack(side="left", padx=8)
         ctk.CTkButton(btn_frame, text="保存", command=on_save, width=100, height=30,
                        fg_color=PRIMARY_DARK, hover_color=PRIMARY,
-                       font=FONT_BODY).pack(side="left", padx=8)
+                       font=make_font(FONT_BODY)).pack(side="left", padx=8)
 
     def _confirm_delete(self, rule_id: int) -> None:
         dialog = ctk.CTkToplevel(self)
@@ -164,7 +165,7 @@ class RulesPage(ctk.CTkScrollableFrame):
         dialog.grab_set()
 
         ctk.CTkLabel(dialog, text="确定要删除此规则吗？",
-                     font=FONT_BODY, text_color=TEXT_PRIMARY).pack(pady=(20, 16))
+                     font=make_font(FONT_BODY), text_color=TEXT_PRIMARY).pack(pady=(20, 16))
 
         btn_frame = ctk.CTkFrame(dialog, fg_color="transparent")
         btn_frame.pack(pady=8)
@@ -184,7 +185,7 @@ class RulesPage(ctk.CTkScrollableFrame):
 
         ctk.CTkButton(btn_frame, text="取消", command=on_cancel, width=80, height=30,
                        fg_color="transparent", border_width=1, border_color=BORDER,
-                       text_color=TEXT_PRIMARY, font=FONT_BODY).pack(side="left", padx=8)
+                       text_color=TEXT_PRIMARY, font=make_font(FONT_BODY)).pack(side="left", padx=8)
         ctk.CTkButton(btn_frame, text="删除", command=on_delete, width=80, height=30,
                        fg_color=(ACCENT_RED, "#b62324"), hover_color=(RED, ACCENT_RED),
-                       font=FONT_BODY).pack(side="left", padx=8)
+                       font=make_font(FONT_BODY)).pack(side="left", padx=8)

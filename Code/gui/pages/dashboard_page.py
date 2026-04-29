@@ -1,6 +1,7 @@
 import customtkinter as ctk
 
 from gui.theme import (
+    make_font,
     PRIMARY, PRIMARY_DARK, SUCCESS, WARNING, ERROR,
     CARD_BG, BORDER, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_HINT,
     FONT_BODY, FONT_CAPTION, FONT_NAV, FONT_SIDEBAR_TITLE, FONT_STATUS,
@@ -47,7 +48,7 @@ class DashboardPage(ctk.CTkScrollableFrame):
         ctk.CTkLabel(
             self._top_frame,
             text="暂无推送记录，点击左侧「立即执行」开始第一次推送",
-            font=FONT_BODY, text_color=TEXT_HINT,
+            font=make_font(FONT_BODY), text_color=TEXT_HINT,
         ).pack(pady=20)
 
         latest_label = ctk.CTkLabel(
@@ -62,7 +63,7 @@ class DashboardPage(ctk.CTkScrollableFrame):
 
         ctk.CTkLabel(
             self._latest_frame, text="暂无推送日志",
-            font=FONT_BODY, text_color=TEXT_HINT,
+            font=make_font(FONT_BODY), text_color=TEXT_HINT,
         ).pack(pady=20)
 
     def refresh(self) -> None:
@@ -90,7 +91,7 @@ class DashboardPage(ctk.CTkScrollableFrame):
             ctk.CTkLabel(
                 self._top_frame,
                 text="暂无推送记录，点击左侧「立即执行」开始第一次推送",
-                font=FONT_BODY, text_color=TEXT_HINT,
+                font=make_font(FONT_BODY), text_color=TEXT_HINT,
             ).pack(pady=20)
 
         for widget in self._latest_frame.winfo_children():
@@ -103,10 +104,10 @@ class DashboardPage(ctk.CTkScrollableFrame):
                 text=f"{latest.get('generated_at', '')[:10]}  |  "
                      f"{latest.get('repo_count', 0)} 个项目  |  "
                      f"{latest.get('title', '')}",
-                font=FONT_BODY, anchor="w", text_color=TEXT_PRIMARY,
+                font=make_font(FONT_BODY), anchor="w", text_color=TEXT_PRIMARY,
             ).pack(fill="x", pady=4)
         else:
             ctk.CTkLabel(
                 self._latest_frame, text="暂无推送日志",
-                font=FONT_BODY, text_color=TEXT_HINT,
+                font=make_font(FONT_BODY), text_color=TEXT_HINT,
             ).pack(pady=20)

@@ -3,6 +3,7 @@ import threading
 import customtkinter as ctk
 
 from gui.theme import (
+    make_font,
     PRIMARY, PRIMARY_DARK, PRIMARY_LIGHT, SUCCESS, WARNING, ERROR,
     CARD_BG, CARD_HOVER, BORDER, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_HINT,
     ACCENT_GREEN, ACCENT_PURPLE, ACCENT_RED, ACCENT_ORANGE,
@@ -61,17 +62,17 @@ class SettingsPage(ctk.CTkScrollableFrame):
         self._token_toggle = ctk.CTkButton(
             row_token.widget_frame, text="\u25D0", width=32, height=28,
             fg_color="transparent", border_width=1, border_color=BORDER,
-            font=FONT_CAPTION, command=self._toggle_token_visibility,
+            font=make_font(FONT_CAPTION), command=self._toggle_token_visibility,
         )
         self._token_toggle.pack(side="left", padx=(0, 4))
         self._github_status = ctk.CTkLabel(
-            row_token.widget_frame, text="", font=FONT_CAPTION, text_color=TEXT_HINT,
+            row_token.widget_frame, text="", font=make_font(FONT_CAPTION), text_color=TEXT_HINT,
         )
         self._github_status.pack(side="left", padx=(4, 0))
         ctk.CTkButton(
             row_token.widget_frame, text="测试连接", width=70, height=28,
             fg_color=PRIMARY_DARK, hover_color=PRIMARY,
-            font=FONT_CAPTION, command=self._test_github,
+            font=make_font(FONT_CAPTION), command=self._test_github,
         ).pack(side="right")
 
         row_interval = FieldRow(body, "抓取间隔(小时)")
@@ -95,7 +96,7 @@ class SettingsPage(ctk.CTkScrollableFrame):
         cb_frame.pack(fill="x", pady=(6, 0))
         ctk.CTkCheckBox(
             cb_frame, text="启用定时任务", variable=self._scheduler_var,
-            font=FONT_BODY, text_color=TEXT_PRIMARY,
+            font=make_font(FONT_BODY), text_color=TEXT_PRIMARY,
             checkbox_width=20, checkbox_height=20, corner_radius=4,
         ).pack(side="left")
 
@@ -108,7 +109,7 @@ class SettingsPage(ctk.CTkScrollableFrame):
         self._provider_menu = ctk.CTkOptionMenu(
             row_provider.widget_frame, values=["\u706B\u5C71\u65B9\u821F Coding Plan"], width=200,
             fg_color=CARD_BG, button_color=PRIMARY_DARK, button_hover_color=PRIMARY,
-            text_color=TEXT_PRIMARY, font=FONT_BODY,
+            text_color=TEXT_PRIMARY, font=make_font(FONT_BODY),
             command=self._on_provider_changed,
         )
         self._provider_menu.pack(side="left")
@@ -119,22 +120,22 @@ class SettingsPage(ctk.CTkScrollableFrame):
         self._api_key_toggle = ctk.CTkButton(
             row_key.widget_frame, text="\u25D0", width=32, height=28,
             fg_color="transparent", border_width=1, border_color=BORDER,
-            font=FONT_CAPTION, command=self._toggle_api_key_visibility,
+            font=make_font(FONT_CAPTION), command=self._toggle_api_key_visibility,
         )
         self._api_key_toggle.pack(side="left", padx=(0, 4))
         self._llm_status = ctk.CTkLabel(
-            row_key.widget_frame, text="", font=FONT_CAPTION, text_color=TEXT_HINT,
+            row_key.widget_frame, text="", font=make_font(FONT_CAPTION), text_color=TEXT_HINT,
         )
         self._llm_status.pack(side="left", padx=(4, 0))
         ctk.CTkButton(
             row_key.widget_frame, text="测试", width=50, height=28,
             fg_color=PRIMARY_DARK, hover_color=PRIMARY,
-            font=FONT_CAPTION, command=self._test_llm,
+            font=make_font(FONT_CAPTION), command=self._test_llm,
         ).pack(side="right", padx=(4, 0))
         ctk.CTkButton(
             row_key.widget_frame, text="获取模型", width=70, height=28,
             fg_color=PRIMARY_DARK, hover_color=PRIMARY,
-            font=FONT_CAPTION, command=self._fetch_models,
+            font=make_font(FONT_CAPTION), command=self._fetch_models,
         ).pack(side="right")
 
         row_url = FieldRow(body, "Base URL")
@@ -145,7 +146,7 @@ class SettingsPage(ctk.CTkScrollableFrame):
         self._model_menu = ctk.CTkOptionMenu(
             row_model.widget_frame, values=["GLM-4.7", "\u81EA\u5B9A\u4E49"], width=220,
             fg_color=CARD_BG, button_color=PRIMARY_DARK, button_hover_color=PRIMARY,
-            text_color=TEXT_PRIMARY, font=FONT_BODY,
+            text_color=TEXT_PRIMARY, font=make_font(FONT_BODY),
         )
         self._model_menu.pack(side="left")
 
@@ -161,7 +162,7 @@ class SettingsPage(ctk.CTkScrollableFrame):
         ctk.CTkLabel(
             hint_frame,
             text='\u63D0\u793A\uFF1A\u8F93\u5165API Key\u540E\u70B9\u51FB\u300C\u83B7\u53D6\u6A21\u578B\u300D\u53EF\u52A0\u8F7D\u53EF\u7528\u6A21\u578B\u5217\u8868\uFF0C\u4E5F\u53EF\u76F4\u63A5\u5728\u300C\u81EA\u5B9A\u4E49\u6A21\u578B\u300D\u4E2D\u8F93\u5165',
-            font=FONT_CAPTION, text_color=TEXT_HINT,
+            font=make_font(FONT_CAPTION), text_color=TEXT_HINT,
         ).pack(side="left")
 
     def _build_evaluation_section(self) -> None:
@@ -175,7 +176,7 @@ class SettingsPage(ctk.CTkScrollableFrame):
 
         ctk.CTkLabel(
             body, text="\u8BC4\u4F30\u6743\u91CD\uFF08\u4E4B\u548C\u987B\u4E3A1.0\uFF09",
-            font=FONT_BODY, text_color=TEXT_PRIMARY,
+            font=make_font(FONT_BODY), text_color=TEXT_PRIMARY,
         ).pack(anchor="w", pady=(8, 4))
 
         self._weight_entries = {}
@@ -193,7 +194,7 @@ class SettingsPage(ctk.CTkScrollableFrame):
 
         self._weight_sum_label = ctk.CTkLabel(
             body, text="\u6743\u91CD\u4E4B\u548C: 1.0",
-            font=FONT_CAPTION, text_color=TEXT_HINT,
+            font=make_font(FONT_CAPTION), text_color=TEXT_HINT,
         )
         self._weight_sum_label.pack(anchor="w", pady=(4, 0))
 
@@ -208,7 +209,7 @@ class SettingsPage(ctk.CTkScrollableFrame):
         ctk.CTkButton(
             row_dir.widget_frame, text="\u6D4F\u89C8", width=50, height=28,
             fg_color=PRIMARY_DARK, hover_color=PRIMARY,
-            font=FONT_CAPTION, command=self._browse_dir,
+            font=make_font(FONT_CAPTION), command=self._browse_dir,
         ).pack(side="left")
 
     def _build_app_section(self) -> None:
@@ -220,7 +221,7 @@ class SettingsPage(ctk.CTkScrollableFrame):
         self._theme_menu = ctk.CTkOptionMenu(
             row_theme.widget_frame, values=["system", "light", "dark"], width=140,
             fg_color=CARD_BG, button_color=PRIMARY_DARK, button_hover_color=PRIMARY,
-            text_color=TEXT_PRIMARY, font=FONT_BODY,
+            text_color=TEXT_PRIMARY, font=make_font(FONT_BODY),
         )
         self._theme_menu.pack(side="left")
 
@@ -229,7 +230,7 @@ class SettingsPage(ctk.CTkScrollableFrame):
         cb_frame.pack(fill="x", pady=(6, 0))
         ctk.CTkCheckBox(
             cb_frame, text="\u5173\u95ED\u65F6\u6700\u5C0F\u5316\u5230\u6258\u76D8", variable=self._tray_var,
-            font=FONT_BODY, text_color=TEXT_PRIMARY,
+            font=make_font(FONT_BODY), text_color=TEXT_PRIMARY,
             checkbox_width=20, checkbox_height=20, corner_radius=4,
         ).pack(side="left")
 
@@ -241,13 +242,13 @@ class SettingsPage(ctk.CTkScrollableFrame):
             btn_frame, text="\u6062\u590D\u9ED8\u8BA4", width=110, height=34,
             fg_color="transparent", border_width=1, border_color=BORDER,
             text_color=TEXT_PRIMARY, hover_color=CARD_HOVER,
-            font=FONT_BODY, command=self._restore_defaults,
+            font=make_font(FONT_BODY), command=self._restore_defaults,
         ).pack(side="left", padx=(0, 12))
 
         ctk.CTkButton(
             btn_frame, text="\u4FDD\u5B58\u8BBE\u7F6E", width=110, height=34,
             fg_color=PRIMARY_DARK, hover_color=PRIMARY,
-            font=FONT_BTN_BOLD, command=self._save_settings,
+            font=make_font(FONT_BTN_BOLD), command=self._save_settings,
         ).pack(side="left")
 
     def _toggle_token_visibility(self) -> None:

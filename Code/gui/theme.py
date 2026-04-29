@@ -40,17 +40,31 @@ SECTION_ICONS = {
     "app": "\u2699",
 }
 
-FONT_PAGE_TITLE = ctk.CTkFont(size=20, weight="bold")
-FONT_SECTION = ctk.CTkFont(size=14, weight="bold")
-FONT_BODY = ctk.CTkFont(size=12)
-FONT_CAPTION = ctk.CTkFont(size=11)
-FONT_BTN = ctk.CTkFont(size=12)
-FONT_BTN_BOLD = ctk.CTkFont(size=12, weight="bold")
-FONT_STAT_VALUE = ctk.CTkFont(size=28, weight="bold")
-FONT_STAT_TITLE = ctk.CTkFont(size=11)
-FONT_NAV = ctk.CTkFont(size=13)
-FONT_SIDEBAR_TITLE = ctk.CTkFont(size=13, weight="bold")
-FONT_STATUS = ctk.CTkFont(size=11)
+FONT_PAGE_TITLE = (20, "bold")
+FONT_SECTION = (14, "bold")
+FONT_BODY = (12, "normal")
+FONT_CAPTION = (11, "normal")
+FONT_BTN = (12, "normal")
+FONT_BTN_BOLD = (12, "bold")
+FONT_STAT_VALUE = (28, "bold")
+FONT_STAT_TITLE = (11, "normal")
+FONT_NAV = (13, "normal")
+FONT_SIDEBAR_TITLE = (13, "bold")
+FONT_STATUS = (11, "normal")
+
+_font_cache = {}
+
+
+def make_font(spec: tuple) -> ctk.CTkFont:
+    """根据字体规格创建或获取缓存的CTkFont对象。
+
+    Args:
+        spec: (size, weight) 元组，如 (12, "normal") 或 (14, "bold")。
+    """
+    if spec not in _font_cache:
+        _font_cache[spec] = ctk.CTkFont(size=spec[0], weight=spec[1])
+    return _font_cache[spec]
+
 
 CORNER_RADIUS_CARD = 8
 CORNER_RADIUS_BTN = 6

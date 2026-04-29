@@ -60,6 +60,14 @@ class App(ctk.CTk):
         if not self._settings.github_token and not self._settings.llm_api_key:
             self.after(500, self._show_welcome_dialog)
 
+    def on_closing(self) -> None:
+        """窗口关闭事件处理。"""
+        minimize = self._settings.get("app.minimize_to_tray", True)
+        if minimize:
+            self.withdraw()
+        else:
+            self.destroy()
+
     def _build_ui(self) -> None:
         self._build_sidebar()
         self._build_main_area()

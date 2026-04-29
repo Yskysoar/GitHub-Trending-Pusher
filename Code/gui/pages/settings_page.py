@@ -4,92 +4,256 @@ import customtkinter as ctk
 
 from service.settings_service import SettingsService
 
+ACCENT = "#00B4D8"
+ACCENT_DIM = "#0077B6"
+ACCENT_BRIGHT = "#48CAE4"
+SUCCESS = "#3FB950"
+ERROR = "#F85149"
+WARNING = "#D29922"
+BG_CARD = ("#F0F0F0", "#1A1D23")
+BG_CARD_HOVER = ("#E5E5E5", "#21262D")
+BORDER_COLOR = ("#D0D0D0", "#30363D")
+LABEL_COLOR = ("#333333", "#C9D1D9")
+HINT_COLOR = ("#666666", "#8B949E")
+SECTION_ICON = {
+    "github": "◈",
+    "evaluation": "◆",
+    "llm": "⬡",
+    "output": "◎",
+    "app": "⚙",
+}
+
+
+class _SectionCard(ctk.CTkFrame):
+    """科技感分区卡片。"""
+
+    def __init__(self, master, title: str = "", icon: str = "",
+                 accent_color: str = ACCENT, **kwargs):
+        super().__init__(master, corner_radius=10, border_width=1,
+                         border_color=BORDER_COLOR, **kwargs)
+
+        header = ctk.CTkFrame(self, fg_color="transparent", height=36)
+        header.pack(fill="x", padx=(16, 16), pady=(12, 0))
+        header.pack_propagate(False)
+
+        accent_bar = ctk.CTkFrame(header, width=4, fg_color=accent_color, corner_radius=2)
+        accent_bar.pack(side="left", fill="y", padx=(0, 10))
+
+        ctk.CTkLabel(
+            header, text=f"{icon}  {title}" if icon else title,
+            font=ctk.CTkFont(size=14, weight="bold"),
+            text_color=LABEL_COLOR,
+        ).pack(side="left")
+
+        self._body = ctk.CTkFrame(self, fg_color="transparent")
+        self._body.pack(fill="x", padx=20, pady=(8, 16))
+
+    @property
+    def body(self) -> ctk.CTkFrame:
+        return self._body
+
+
+class _FieldRow(ctk.CTkFrame):
+    """表单行：标签 + 输入控件。"""
+
+    def __init__(self, master, label: str = "", width: int = 220, **kwargs):
+        super().__init__(master, fg_color="transparent", **kwargs)
+        self.pack(fill="x", pady=3)
+
+        ctk.CTkLabel(
+            self, text=label, font=ctk.CTkFont(size=12),
+            text_color=LABEL_COLOR, width=120, anchor="w",
+        ).pack(side="left")
+
+        self._widget_frame = ctk.CTkFrame(self, fg_color="transparent")
+        self._widget_frame.pack(side="left", fill="x", expand=True)
+
+    @property
+    def widget_frame(self) -> ctk.CTkFrame:
+        return self._widget_frame
+
 
 class SettingsPage(ctk.CTkScrollableFrame):
     """系统设置页面。
 
     包含GitHub配置、推送与评估设置、大模型配置、输出设置、应用设置。
+    采用科技感暗色主题设计。
     """
 
     def __init__(self, master, settings_svc: SettingsService, **kwargs):
         super().__init__(master, **kwargs)
         self._svc = settings_svc
         self._fetched_models: list[str] = []
+        self._api_key_visible = False
+        self._token_visible = False
         self._build_ui()
 
     def _build_ui(self) -> None:
         """构建UI。"""
+        header_frame = ctk.CTkFrame(self, fg_color="transparent")
+        header_frame.pack(fill="x", padx=20, pady=(20, 8))
+
         ctk.CTkLabel(
-            self, text="系统设置",
-            font=ctk.CTkFont(size=20, weight="bold"),
-        ).pack(anchor="w", padx=16, pady=(16, 12))
+            header_frame, text="系统设置",
+            font=ctk.CTkFont(size=22, weight="bold"),
+            text_color=LABEL_COLOR,
+        ).pack(side="left")
+
+        ctk.CTkLabel(
+            header_frame, text="配置应用参数与API密钥",
+            font=ctk.CTkFont(size=12),
+            text_color=HINT_COLOR,
+        ).pack(side="left", padx=(12, 0), pady=(6, 0))
+
+        sep = ctk.CTkFrame(self, height=2, fg_color=ACCENT_DIM)
+        sep.pack(fill="x", padx=20, pady=(4, 16))
 
         self._build_github_section()
-        self._build_evaluation_section()
         self._build_llm_section()
+        self._build_evaluation_section()
         self._build_output_section()
         self._build_app_section()
         self._build_action_buttons()
 
     def _build_github_section(self) -> None:
         """GitHub配置区域。"""
-        frame = ctk.CTkFrame(self)
-        frame.pack(fill="x", padx=16, pady=(0, 12))
+        card = _SectionCard(self, "GitHub 配置", SECTION_ICON["github"], "#238636")
+        card.pack(fill="x", padx=20, pady=(0, 12))
+        body = card.body
 
-        ctk.CTkLabel(frame, text="GitHub 配置",
-                     font=ctk.CTkFont(size=14, weight="bold")).pack(anchor="w", padx=12, pady=(10, 6))
+        row_token = _FieldRow(body, "Access Token")
+        self._token_entry = ctk.CTkEntry(row_token.widget_frame, show="•", width=240)
+        self._token_entry.pack(side="left", padx=(0, 4))
+        self._token_toggle = ctk.CTkButton(
+            row_token.widget_frame, text="👁", width=32, height=28,
+            fg_color="transparent", border_width=1, border_color=BORDER_COLOR,
+            font=ctk.CTkFont(size=12),
+            command=self._toggle_token_visibility,
+        )
+        self._token_toggle.pack(side="left", padx=(0, 4))
+        self._github_status = ctk.CTkLabel(
+            row_token.widget_frame, text="", font=ctk.CTkFont(size=11),
+            text_color=HINT_COLOR,
+        )
+        self._github_status.pack(side="left", padx=(4, 0))
+        ctk.CTkButton(
+            row_token.widget_frame, text="测试连接", width=70, height=28,
+            fg_color=ACCENT_DIM, hover_color=ACCENT,
+            font=ctk.CTkFont(size=11),
+            command=self._test_github,
+        ).pack(side="right")
 
-        row = ctk.CTkFrame(frame, fg_color="transparent")
-        row.pack(fill="x", padx=12, pady=4)
-        ctk.CTkLabel(row, text="Personal Access Token", font=ctk.CTkFont(size=12)).pack(side="left")
-        self._token_entry = ctk.CTkEntry(row, show="•", width=280)
-        self._token_entry.pack(side="left", padx=8)
-        ctk.CTkButton(row, text="测试", width=50, command=self._test_github).pack(side="left")
+        row_interval = _FieldRow(body, "抓取间隔(小时)")
+        self._interval_entry = ctk.CTkEntry(row_interval.widget_frame, width=80)
+        self._interval_entry.pack(side="left")
 
-        row2 = ctk.CTkFrame(frame, fg_color="transparent")
-        row2.pack(fill="x", padx=12, pady=4)
-        ctk.CTkLabel(row2, text="抓取间隔（小时）", font=ctk.CTkFont(size=12)).pack(side="left")
-        self._interval_entry = ctk.CTkEntry(row2, width=80)
-        self._interval_entry.pack(side="left", padx=8)
+        row_time = _FieldRow(body, "执行时间")
+        self._run_time_entry = ctk.CTkEntry(row_time.widget_frame, width=80, placeholder_text="09:00")
+        self._run_time_entry.pack(side="left")
 
-        row3 = ctk.CTkFrame(frame, fg_color="transparent")
-        row3.pack(fill="x", padx=12, pady=4)
-        ctk.CTkLabel(row3, text="执行时间", font=ctk.CTkFont(size=12)).pack(side="left")
-        self._run_time_entry = ctk.CTkEntry(row3, width=80, placeholder_text="09:00")
-        self._run_time_entry.pack(side="left", padx=8)
+        row_max = _FieldRow(body, "最大抓取数")
+        self._max_repos_entry = ctk.CTkEntry(row_max.widget_frame, width=80)
+        self._max_repos_entry.pack(side="left")
+
+        row_stars = _FieldRow(body, "最低Star数")
+        self._min_stars_entry = ctk.CTkEntry(row_stars.widget_frame, width=80)
+        self._min_stars_entry.pack(side="left")
 
         self._scheduler_var = ctk.BooleanVar()
-        ctk.CTkCheckBox(frame, text="启用定时任务", variable=self._scheduler_var,
-                        font=ctk.CTkFont(size=12)).pack(anchor="w", padx=12, pady=4)
+        cb_frame = ctk.CTkFrame(body, fg_color="transparent")
+        cb_frame.pack(fill="x", pady=(6, 0))
+        ctk.CTkCheckBox(
+            cb_frame, text="启用定时任务", variable=self._scheduler_var,
+            font=ctk.CTkFont(size=12), text_color=LABEL_COLOR,
+            checkbox_width=20, checkbox_height=20,
+            corner_radius=4,
+        ).pack(side="left")
 
-        row4 = ctk.CTkFrame(frame, fg_color="transparent")
-        row4.pack(fill="x", padx=12, pady=4)
-        ctk.CTkLabel(row4, text="最大抓取数", font=ctk.CTkFont(size=12)).pack(side="left")
-        self._max_repos_entry = ctk.CTkEntry(row4, width=80)
-        self._max_repos_entry.pack(side="left", padx=8)
+    def _build_llm_section(self) -> None:
+        """大模型配置区域。"""
+        card = _SectionCard(self, "大模型配置", SECTION_ICON["llm"], ACCENT)
+        card.pack(fill="x", padx=20, pady=(0, 12))
+        body = card.body
 
-        row5 = ctk.CTkFrame(frame, fg_color="transparent")
-        row5.pack(fill="x", padx=12, pady=(4, 10))
-        ctk.CTkLabel(row5, text="最低Star数", font=ctk.CTkFont(size=12)).pack(side="left")
-        self._min_stars_entry = ctk.CTkEntry(row5, width=80)
-        self._min_stars_entry.pack(side="left", padx=8)
+        row_provider = _FieldRow(body, "代理厂家")
+        self._provider_menu = ctk.CTkOptionMenu(
+            row_provider.widget_frame, values=["火山方舟"], width=180,
+            fg_color=BG_CARD, button_color=ACCENT_DIM, button_hover_color=ACCENT,
+            text_color=LABEL_COLOR, font=ctk.CTkFont(size=12),
+            command=self._on_provider_changed,
+        )
+        self._provider_menu.pack(side="left")
+
+        row_key = _FieldRow(body, "API Key")
+        self._api_key_entry = ctk.CTkEntry(row_key.widget_frame, show="•", width=220)
+        self._api_key_entry.pack(side="left", padx=(0, 4))
+        self._api_key_toggle = ctk.CTkButton(
+            row_key.widget_frame, text="👁", width=32, height=28,
+            fg_color="transparent", border_width=1, border_color=BORDER_COLOR,
+            font=ctk.CTkFont(size=12),
+            command=self._toggle_api_key_visibility,
+        )
+        self._api_key_toggle.pack(side="left", padx=(0, 4))
+        self._llm_status = ctk.CTkLabel(
+            row_key.widget_frame, text="", font=ctk.CTkFont(size=11),
+            text_color=HINT_COLOR,
+        )
+        self._llm_status.pack(side="left", padx=(4, 0))
+        ctk.CTkButton(
+            row_key.widget_frame, text="测试", width=50, height=28,
+            fg_color=ACCENT_DIM, hover_color=ACCENT,
+            font=ctk.CTkFont(size=11),
+            command=self._test_llm,
+        ).pack(side="right", padx=(4, 0))
+        ctk.CTkButton(
+            row_key.widget_frame, text="获取模型", width=70, height=28,
+            fg_color=ACCENT_DIM, hover_color=ACCENT,
+            font=ctk.CTkFont(size=11),
+            command=self._fetch_models,
+        ).pack(side="right")
+
+        row_url = _FieldRow(body, "Base URL")
+        self._base_url_entry = ctk.CTkEntry(row_url.widget_frame, width=340)
+        self._base_url_entry.pack(side="left")
+
+        row_model = _FieldRow(body, "模型选择")
+        self._model_menu = ctk.CTkOptionMenu(
+            row_model.widget_frame, values=["GLM-4.7", "自定义"], width=220,
+            fg_color=BG_CARD, button_color=ACCENT_DIM, button_hover_color=ACCENT,
+            text_color=LABEL_COLOR, font=ctk.CTkFont(size=12),
+        )
+        self._model_menu.pack(side="left")
+
+        row_custom = _FieldRow(body, "自定义模型")
+        self._custom_model_entry = ctk.CTkEntry(
+            row_custom.widget_frame, width=220,
+            placeholder_text="留空则使用上方选择的模型",
+        )
+        self._custom_model_entry.pack(side="left")
+
+        hint_frame = ctk.CTkFrame(body, fg_color="transparent")
+        hint_frame.pack(fill="x", pady=(6, 0))
+        ctk.CTkLabel(
+            hint_frame,
+            text='提示：输入API Key后点击「获取模型」可加载可用模型列表，也可直接在「自定义模型」中输入',
+            font=ctk.CTkFont(size=11),
+            text_color=HINT_COLOR,
+        ).pack(side="left")
 
     def _build_evaluation_section(self) -> None:
         """推送与评估设置区域。"""
-        frame = ctk.CTkFrame(self)
-        frame.pack(fill="x", padx=16, pady=(0, 12))
+        card = _SectionCard(self, "推送与评估", SECTION_ICON["evaluation"], "#8957E5")
+        card.pack(fill="x", padx=20, pady=(0, 12))
+        body = card.body
 
-        ctk.CTkLabel(frame, text="推送与评估设置",
-                     font=ctk.CTkFont(size=14, weight="bold")).pack(anchor="w", padx=12, pady=(10, 6))
+        row_topn = _FieldRow(body, "推送项目数量")
+        self._top_n_entry = ctk.CTkEntry(row_topn.widget_frame, width=80)
+        self._top_n_entry.pack(side="left")
 
-        row = ctk.CTkFrame(frame, fg_color="transparent")
-        row.pack(fill="x", padx=12, pady=4)
-        ctk.CTkLabel(row, text="推送项目数量", font=ctk.CTkFont(size=12)).pack(side="left")
-        self._top_n_entry = ctk.CTkEntry(row, width=80)
-        self._top_n_entry.pack(side="left", padx=8)
-
-        ctk.CTkLabel(frame, text="评估权重（之和须为1.0）",
-                     font=ctk.CTkFont(size=12)).pack(anchor="w", padx=12, pady=(8, 4))
+        ctk.CTkLabel(
+            body, text="评估权重（之和须为1.0）",
+            font=ctk.CTkFont(size=12), text_color=LABEL_COLOR,
+        ).pack(anchor="w", pady=(8, 4))
 
         self._weight_entries = {}
         weight_labels = [
@@ -99,67 +263,90 @@ class SettingsPage(ctk.CTkScrollableFrame):
             ("learning_value", "学习价值"),
         ]
         for key, label in weight_labels:
-            row = ctk.CTkFrame(frame, fg_color="transparent")
-            row.pack(fill="x", padx=12, pady=2)
-            ctk.CTkLabel(row, text=label, font=ctk.CTkFont(size=12), width=100).pack(side="left")
-            entry = ctk.CTkEntry(row, width=80)
-            entry.pack(side="left", padx=8)
+            row = _FieldRow(body, label)
+            entry = ctk.CTkEntry(row.widget_frame, width=80)
+            entry.pack(side="left")
             self._weight_entries[key] = entry
 
-        self._weight_sum_label = ctk.CTkLabel(frame, text="权重之和: 1.0",
-                                               font=ctk.CTkFont(size=11),
-                                               text_color=("gray50", "gray200"))
-        self._weight_sum_label.pack(anchor="w", padx=12, pady=(4, 10))
-
-    def _build_llm_section(self) -> None:
-        """大模型配置区域。"""
-        frame = ctk.CTkFrame(self)
-        frame.pack(fill="x", padx=16, pady=(0, 12))
-
-        ctk.CTkLabel(frame, text="大模型配置",
-                     font=ctk.CTkFont(size=14, weight="bold")).pack(anchor="w", padx=12, pady=(10, 6))
-
-        row_provider = ctk.CTkFrame(frame, fg_color="transparent")
-        row_provider.pack(fill="x", padx=12, pady=4)
-        ctk.CTkLabel(row_provider, text="代理厂家", font=ctk.CTkFont(size=12)).pack(side="left")
-        self._provider_menu = ctk.CTkOptionMenu(
-            row_provider, values=["火山方舟"], width=160,
-            command=self._on_provider_changed,
-        )
-        self._provider_menu.pack(side="left", padx=8)
-
-        row_key = ctk.CTkFrame(frame, fg_color="transparent")
-        row_key.pack(fill="x", padx=12, pady=4)
-        ctk.CTkLabel(row_key, text="API Key", font=ctk.CTkFont(size=12)).pack(side="left")
-        self._api_key_entry = ctk.CTkEntry(row_key, show="•", width=240)
-        self._api_key_entry.pack(side="left", padx=8)
-        ctk.CTkButton(row_key, text="测试", width=50, command=self._test_llm).pack(side="left", padx=(0, 4))
-        ctk.CTkButton(row_key, text="获取模型", width=70, command=self._fetch_models).pack(side="left")
-
-        row_url = ctk.CTkFrame(frame, fg_color="transparent")
-        row_url.pack(fill="x", padx=12, pady=4)
-        ctk.CTkLabel(row_url, text="Base URL", font=ctk.CTkFont(size=12)).pack(side="left")
-        self._base_url_entry = ctk.CTkEntry(row_url, width=300)
-        self._base_url_entry.pack(side="left", padx=8)
-
-        row_model = ctk.CTkFrame(frame, fg_color="transparent")
-        row_model.pack(fill="x", padx=12, pady=4)
-        ctk.CTkLabel(row_model, text="模型选择", font=ctk.CTkFont(size=12)).pack(side="left")
-        self._model_menu = ctk.CTkOptionMenu(row_model, values=["GLM-4.7"], width=200)
-        self._model_menu.pack(side="left", padx=8)
-
-        row_custom = ctk.CTkFrame(frame, fg_color="transparent")
-        row_custom.pack(fill="x", padx=12, pady=(4, 10))
-        ctk.CTkLabel(row_custom, text="自定义模型", font=ctk.CTkFont(size=12)).pack(side="left")
-        self._custom_model_entry = ctk.CTkEntry(row_custom, width=200, placeholder_text="留空则使用上方选择的模型")
-        self._custom_model_entry.pack(side="left", padx=8)
-
-        self._model_hint_label = ctk.CTkLabel(
-            frame, text='提示：输入API Key后点击「获取模型」可加载可用模型列表，也可直接在「自定义模型」中输入',
+        self._weight_sum_label = ctk.CTkLabel(
+            body, text="权重之和: 1.0",
             font=ctk.CTkFont(size=11),
-            text_color=("gray50", "gray200"),
+            text_color=HINT_COLOR,
         )
-        self._model_hint_label.pack(anchor="w", padx=12, pady=(0, 10))
+        self._weight_sum_label.pack(anchor="w", pady=(4, 0))
+
+    def _build_output_section(self) -> None:
+        """输出设置区域。"""
+        card = _SectionCard(self, "输出设置", SECTION_ICON["output"], "#DA3633")
+        card.pack(fill="x", padx=20, pady=(0, 12))
+        body = card.body
+
+        row_dir = _FieldRow(body, "输出目录")
+        self._save_dir_entry = ctk.CTkEntry(row_dir.widget_frame, width=280)
+        self._save_dir_entry.pack(side="left", padx=(0, 4))
+        ctk.CTkButton(
+            row_dir.widget_frame, text="浏览", width=50, height=28,
+            fg_color=ACCENT_DIM, hover_color=ACCENT,
+            font=ctk.CTkFont(size=11),
+            command=self._browse_dir,
+        ).pack(side="left")
+
+    def _build_app_section(self) -> None:
+        """应用设置区域。"""
+        card = _SectionCard(self, "应用设置", SECTION_ICON["app"], "#F0883E")
+        card.pack(fill="x", padx=20, pady=(0, 12))
+        body = card.body
+
+        row_theme = _FieldRow(body, "主题模式")
+        self._theme_menu = ctk.CTkOptionMenu(
+            row_theme.widget_frame,
+            values=["system", "light", "dark"], width=140,
+            fg_color=BG_CARD, button_color=ACCENT_DIM, button_hover_color=ACCENT,
+            text_color=LABEL_COLOR, font=ctk.CTkFont(size=12),
+        )
+        self._theme_menu.pack(side="left")
+
+        self._tray_var = ctk.BooleanVar()
+        cb_frame = ctk.CTkFrame(body, fg_color="transparent")
+        cb_frame.pack(fill="x", pady=(6, 0))
+        ctk.CTkCheckBox(
+            cb_frame, text="关闭时最小化到托盘", variable=self._tray_var,
+            font=ctk.CTkFont(size=12), text_color=LABEL_COLOR,
+            checkbox_width=20, checkbox_height=20,
+            corner_radius=4,
+        ).pack(side="left")
+
+    def _build_action_buttons(self) -> None:
+        """操作按钮。"""
+        btn_frame = ctk.CTkFrame(self, fg_color="transparent")
+        btn_frame.pack(fill="x", padx=20, pady=(8, 20))
+
+        ctk.CTkButton(
+            btn_frame, text="恢复默认", width=110, height=36,
+            fg_color="transparent", border_width=1, border_color=BORDER_COLOR,
+            text_color=LABEL_COLOR, hover_color=BG_CARD_HOVER,
+            font=ctk.CTkFont(size=12),
+            command=self._restore_defaults,
+        ).pack(side="left", padx=(0, 12))
+
+        ctk.CTkButton(
+            btn_frame, text="保存设置", width=110, height=36,
+            fg_color=ACCENT_DIM, hover_color=ACCENT,
+            font=ctk.CTkFont(size=12, weight="bold"),
+            command=self._save_settings,
+        ).pack(side="left")
+
+    def _toggle_token_visibility(self) -> None:
+        """切换Token可见性。"""
+        self._token_visible = not self._token_visible
+        self._token_entry.configure(show="" if self._token_visible else "•")
+        self._token_toggle.configure(text="🔒" if self._token_visible else "👁")
+
+    def _toggle_api_key_visibility(self) -> None:
+        """切换API Key可见性。"""
+        self._api_key_visible = not self._api_key_visible
+        self._api_key_entry.configure(show="" if self._api_key_visible else "•")
+        self._api_key_toggle.configure(text="🔒" if self._api_key_visible else "👁")
 
     def _on_provider_changed(self, selected: str) -> None:
         """厂家选择变更回调。"""
@@ -170,11 +357,6 @@ class SettingsPage(ctk.CTkScrollableFrame):
             base_url = provider_info.get("base_url", "")
             self._base_url_entry.delete(0, "end")
             self._base_url_entry.insert(0, base_url)
-
-            if provider_key == "custom":
-                self._base_url_entry.configure(state="normal")
-            else:
-                self._base_url_entry.configure(state="normal")
 
     def _get_provider_key_by_name(self, name: str) -> str | None:
         """根据厂家显示名称获取配置key。"""
@@ -240,55 +422,6 @@ class SettingsPage(ctk.CTkScrollableFrame):
                 icon="cancel",
             )
 
-    def _build_output_section(self) -> None:
-        """输出设置区域。"""
-        frame = ctk.CTkFrame(self)
-        frame.pack(fill="x", padx=16, pady=(0, 12))
-
-        ctk.CTkLabel(frame, text="输出设置",
-                     font=ctk.CTkFont(size=14, weight="bold")).pack(anchor="w", padx=12, pady=(10, 6))
-
-        row = ctk.CTkFrame(frame, fg_color="transparent")
-        row.pack(fill="x", padx=12, pady=(4, 10))
-        ctk.CTkLabel(row, text="日志保存目录", font=ctk.CTkFont(size=12)).pack(side="left")
-        self._save_dir_entry = ctk.CTkEntry(row, width=280)
-        self._save_dir_entry.pack(side="left", padx=8)
-        ctk.CTkButton(row, text="浏览", width=50, command=self._browse_dir).pack(side="left")
-
-    def _build_app_section(self) -> None:
-        """应用设置区域。"""
-        frame = ctk.CTkFrame(self)
-        frame.pack(fill="x", padx=16, pady=(0, 12))
-
-        ctk.CTkLabel(frame, text="应用设置",
-                     font=ctk.CTkFont(size=14, weight="bold")).pack(anchor="w", padx=12, pady=(10, 6))
-
-        row = ctk.CTkFrame(frame, fg_color="transparent")
-        row.pack(fill="x", padx=12, pady=4)
-        ctk.CTkLabel(row, text="主题", font=ctk.CTkFont(size=12)).pack(side="left")
-        self._theme_menu = ctk.CTkOptionMenu(row, values=["system", "light", "dark"], width=120)
-        self._theme_menu.pack(side="left", padx=8)
-
-        self._tray_var = ctk.BooleanVar()
-        ctk.CTkCheckBox(frame, text="关闭时最小化到托盘", variable=self._tray_var,
-                        font=ctk.CTkFont(size=12)).pack(anchor="w", padx=12, pady=(4, 10))
-
-    def _build_action_buttons(self) -> None:
-        """操作按钮。"""
-        btn_frame = ctk.CTkFrame(self, fg_color="transparent")
-        btn_frame.pack(fill="x", padx=16, pady=(0, 16))
-
-        ctk.CTkButton(
-            btn_frame, text="恢复默认", width=100,
-            fg_color="transparent", border_width=1,
-            command=self._restore_defaults,
-        ).pack(side="left", padx=(0, 8))
-
-        ctk.CTkButton(
-            btn_frame, text="保存设置", width=100,
-            command=self._save_settings,
-        ).pack(side="left")
-
     def refresh(self) -> None:
         """加载当前配置到UI。"""
         config = self._svc.get_settings_for_edit()
@@ -344,6 +477,9 @@ class SettingsPage(ctk.CTkScrollableFrame):
         self._theme_menu.set(app.get("theme", "system"))
         self._tray_var.set(app.get("minimize_to_tray", True))
 
+        self._github_status.configure(text="")
+        self._llm_status.configure(text="")
+
     def _save_settings(self) -> None:
         """保存设置。"""
         try:
@@ -354,9 +490,15 @@ class SettingsPage(ctk.CTkScrollableFrame):
 
             weight_sum = sum(weights.values())
             if abs(weight_sum - 1.0) >= 0.01:
-                self._weight_sum_label.configure(text=f"权重之和: {weight_sum:.2f} (必须为1.0)", text_color="red")
+                self._weight_sum_label.configure(
+                    text=f"权重之和: {weight_sum:.2f} (必须为1.0)",
+                    text_color=ERROR,
+                )
                 return
-            self._weight_sum_label.configure(text=f"权重之和: {weight_sum:.2f}", text_color=("gray50", "gray200"))
+            self._weight_sum_label.configure(
+                text=f"权重之和: {weight_sum:.2f}",
+                text_color=HINT_COLOR,
+            )
 
             provider_name = self._provider_menu.get()
             provider_key = self._get_provider_key_by_name(provider_name)
@@ -403,7 +545,10 @@ class SettingsPage(ctk.CTkScrollableFrame):
             ctk.set_appearance_mode(theme)
 
         except ValueError as e:
-            self._weight_sum_label.configure(text=f"输入有误: {e}", text_color="red")
+            self._weight_sum_label.configure(
+                text=f"输入有误: {e}",
+                text_color=ERROR,
+            )
 
     def _restore_defaults(self) -> None:
         """恢复默认设置。"""
@@ -413,12 +558,23 @@ class SettingsPage(ctk.CTkScrollableFrame):
     def _test_github(self) -> None:
         """测试GitHub连接。"""
         token = self._token_entry.get().strip()
-        result = self._svc.test_github_connection(token=token if token else None)
-        msg = result.get("message", "")
+        self._github_status.configure(text="测试中...", text_color=WARNING)
+
+        def _do_test():
+            result = self._svc.test_github_connection(token=token if token else None)
+            self.after(0, lambda: self._on_github_tested(result))
+
+        threading.Thread(target=_do_test, daemon=True).start()
+
+    def _on_github_tested(self, result: dict) -> None:
+        """GitHub测试完成回调。"""
         from gui.components.widgets import MessageBox
+        msg = result.get("message", "")
         if result.get("success"):
+            self._github_status.configure(text="已连接", text_color=SUCCESS)
             MessageBox(self.winfo_toplevel(), title="连接测试", message=msg, icon="check")
         else:
+            self._github_status.configure(text="连接失败", text_color=ERROR)
             MessageBox(self.winfo_toplevel(), title="连接测试", message=msg, icon="cancel")
 
     def _test_llm(self) -> None:
@@ -431,16 +587,27 @@ class SettingsPage(ctk.CTkScrollableFrame):
         if model == "自定义":
             model = None
 
-        result = self._svc.test_llm_connection(
-            api_key=api_key if api_key else None,
-            base_url=base_url if base_url else None,
-            model=model,
-        )
-        msg = result.get("message", "")
+        self._llm_status.configure(text="测试中...", text_color=WARNING)
+
+        def _do_test():
+            result = self._svc.test_llm_connection(
+                api_key=api_key if api_key else None,
+                base_url=base_url if base_url else None,
+                model=model,
+            )
+            self.after(0, lambda: self._on_llm_tested(result))
+
+        threading.Thread(target=_do_test, daemon=True).start()
+
+    def _on_llm_tested(self, result: dict) -> None:
+        """LLM测试完成回调。"""
         from gui.components.widgets import MessageBox
+        msg = result.get("message", "")
         if result.get("success"):
+            self._llm_status.configure(text="已连接", text_color=SUCCESS)
             MessageBox(self.winfo_toplevel(), title="连接测试", message=msg, icon="check")
         else:
+            self._llm_status.configure(text="连接失败", text_color=ERROR)
             MessageBox(self.winfo_toplevel(), title="连接测试", message=msg, icon="cancel")
 
     def _browse_dir(self) -> None:

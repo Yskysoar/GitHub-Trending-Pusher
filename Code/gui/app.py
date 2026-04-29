@@ -227,35 +227,70 @@ class App(ctk.CTk):
         """显示首次运行引导弹窗。"""
         dialog = ctk.CTkToplevel(self)
         dialog.title("欢迎使用 GitHub热点推送")
-        dialog.geometry("450x320")
+        dialog.geometry("480x400")
         dialog.transient(self)
         dialog.grab_set()
 
+        header = ctk.CTkFrame(dialog, fg_color="transparent")
+        header.pack(fill="x", padx=24, pady=(20, 4))
+
         ctk.CTkLabel(
-            dialog, text="欢迎使用 GitHub热点推送",
+            header, text="欢迎使用 GitHub热点推送",
             font=ctk.CTkFont(size=18, weight="bold"),
-        ).pack(pady=(20, 8))
+        ).pack(anchor="w")
 
         ctk.CTkLabel(
             dialog, text="为了正常使用，请完成以下配置：",
             font=ctk.CTkFont(size=13),
-        ).pack(pady=(0, 16))
+            text_color=("gray50", "gray200"),
+        ).pack(anchor="w", padx=24, pady=(0, 12))
 
         ctk.CTkLabel(dialog, text="1. GitHub Personal Access Token",
-                     font=ctk.CTkFont(size=12), anchor="w").pack(fill="x", padx=24, pady=2)
-        token_entry = ctk.CTkEntry(dialog, show="•", width=380)
-        token_entry.pack(padx=24, pady=(0, 8))
+                     font=ctk.CTkFont(size=12, weight="bold"), anchor="w").pack(fill="x", padx=24, pady=(0, 2))
+        token_entry = ctk.CTkEntry(dialog, show="•", width=420, placeholder_text="ghp_xxxxxxxxxxxx")
+        token_entry.pack(padx=24, pady=(0, 12))
 
-        ctk.CTkLabel(dialog, text="2. 火山方舟 API Key",
-                     font=ctk.CTkFont(size=12), anchor="w").pack(fill="x", padx=24, pady=2)
-        key_entry = ctk.CTkEntry(dialog, show="•", width=380)
-        key_entry.pack(padx=24, pady=(0, 8))
+        ctk.CTkLabel(dialog, text="2. LLM API 配置",
+                     font=ctk.CTkFont(size=12, weight="bold"), anchor="w").pack(fill="x", padx=24, pady=(0, 2))
+
+        provider_frame = ctk.CTkFrame(dialog, fg_color="transparent")
+        provider_frame.pack(fill="x", padx=24, pady=(0, 4))
+
+        ctk.CTkLabel(provider_frame, text="代理厂家", font=ctk.CTkFont(size=12), width=70).pack(side="left")
+        providers = self._settings.llm_providers
+        provider_names = [info.get("name", key) for key, info in providers.items()]
+        provider_menu = ctk.CTkOptionMenu(provider_frame, values=provider_names, width=160)
+        provider_menu.pack(side="left", padx=(0, 8))
+
+        base_url_entry = ctk.CTkEntry(provider_frame, width=200, placeholder_text="Base URL")
+        base_url_entry.pack(side="left")
+
+        if providers:
+            first_key = list(providers.keys())[0]
+            first_info = list(providers.values())[0]
+            base_url_entry.insert(0, first_info.get("base_url", ""))
+
+        def _on_provider_change(selected):
+            for key, info in providers.items():
+                if info.get("name") == selected:
+                    base_url_entry.delete(0, "end")
+                    base_url_entry.insert(0, info.get("base_url", ""))
+                    break
+
+        provider_menu.configure(command=_on_provider_change)
+
+        key_frame = ctk.CTkFrame(dialog, fg_color="transparent")
+        key_frame.pack(fill="x", padx=24, pady=(0, 4))
+
+        ctk.CTkLabel(key_frame, text="API Key", font=ctk.CTkFont(size=12), width=70).pack(side="left")
+        key_entry = ctk.CTkEntry(key_frame, show="•", width=350)
+        key_entry.pack(side="left")
 
         create_demo_var = ctk.BooleanVar(value=True)
         ctk.CTkCheckBox(
             dialog, text="创建示例推送规则（AI大模型方向）",
             variable=create_demo_var, font=ctk.CTkFont(size=12),
-        ).pack(padx=24, pady=8)
+        ).pack(padx=24, pady=8, anchor="w")
 
         btn_frame = ctk.CTkFrame(dialog, fg_color="transparent")
         btn_frame.pack(pady=8)
@@ -267,10 +302,23 @@ class App(ctk.CTk):
         def on_start():
             token = token_entry.get().strip()
             api_key = key_entry.get().strip()
+            base_url = base_url_entry.get().strip()
+            provider_name = provider_menu.get()
+
+            provider_key = None
+            for key, info in providers.items():
+                if info.get("name") == provider_name:
+                    provider_key = key
+                    break
+
             if token:
                 self._settings.set("github.token", token)
             if api_key:
                 self._settings.set("llm.api_key", api_key)
+            if base_url:
+                self._settings.set("llm.base_url", base_url)
+            if provider_key:
+                self._settings.set("llm.provider", provider_key)
             self._settings.save()
 
             if create_demo_var.get():

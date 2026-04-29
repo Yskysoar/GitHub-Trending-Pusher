@@ -220,6 +220,9 @@ class LLMSummarizer:
         api_key = sanitize_ascii(self._settings.llm_api_key)
         model = self._settings.llm_model
 
+        if not api_key:
+            raise LLMError(ErrorCode.LLM_API_KEY_INVALID, "LLM API Key未配置，请在设置页面配置API Key")
+
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {api_key}",

@@ -87,13 +87,13 @@ class App(ctk.CTk):
 
         ctk.CTkLabel(
             logo_frame, text="GH",
-            font=ctk.CTkFont(size=20, weight="bold"),
+            font=make_font(FONT_PAGE_TITLE),
             text_color=PRIMARY,
         ).pack(side="left")
 
         ctk.CTkLabel(
             logo_frame, text=" Trending",
-            font=ctk.CTkFont(size=14, weight="bold"),
+            font=make_font(FONT_SECTION),
             text_color=TEXT_PRIMARY,
         ).pack(side="left")
 
@@ -250,7 +250,7 @@ class App(ctk.CTk):
         header.pack(fill="x", padx=24, pady=(20, 4))
         ctk.CTkLabel(
             header, text="GitHub \u70ED\u70B9\u63A8\u9001",
-            font=ctk.CTkFont(size=20, weight="bold"),
+            font=make_font(FONT_PAGE_TITLE),
             text_color=PRIMARY,
         ).pack(side="left")
         ctk.CTkLabel(
@@ -259,13 +259,13 @@ class App(ctk.CTk):
         ).pack(anchor="w", padx=24, pady=(0, 12))
 
         ctk.CTkLabel(dialog, text="1. GitHub Personal Access Token",
-                     font=ctk.CTkFont(size=12, weight="bold"), anchor="w",
+                     font=make_font(FONT_BTN_BOLD), anchor="w",
                      text_color=TEXT_PRIMARY).pack(fill="x", padx=24, pady=(0, 2))
         token_entry = ctk.CTkEntry(dialog, show="\u2022", width=440, placeholder_text="ghp_xxxxxxxxxxxx")
         token_entry.pack(padx=24, pady=(0, 12))
 
         ctk.CTkLabel(dialog, text="2. LLM API \u914D\u7F6E",
-                     font=ctk.CTkFont(size=12, weight="bold"), anchor="w",
+                     font=make_font(FONT_BTN_BOLD), anchor="w",
                      text_color=TEXT_PRIMARY).pack(fill="x", padx=24, pady=(0, 2))
 
         provider_frame = ctk.CTkFrame(dialog, fg_color="transparent")

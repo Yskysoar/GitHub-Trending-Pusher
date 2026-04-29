@@ -4,7 +4,7 @@ from gui.theme import (
     make_font,
     PRIMARY, PRIMARY_DARK, ERROR as RED, ACCENT_RED,
     CARD_BG, BORDER, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_HINT,
-    FONT_BODY, FONT_CAPTION, CORNER_RADIUS_CARD,
+    FONT_BODY, FONT_CAPTION, FONT_ICON_MD, CORNER_RADIUS_CARD,
 )
 from gui.components.widgets import RuleCard, PageHeader, PageDivider
 from service.rule_service import RuleService
@@ -70,7 +70,7 @@ class RulesPage(ctk.CTkScrollableFrame):
         dialog.grab_set()
 
         ctk.CTkLabel(dialog, text=title,
-                     font=ctk.CTkFont(size=16, weight="bold"),
+                     font=make_font(FONT_ICON_MD),
                      text_color=TEXT_PRIMARY).pack(pady=(16, 12))
 
         form = ctk.CTkFrame(dialog, fg_color="transparent")

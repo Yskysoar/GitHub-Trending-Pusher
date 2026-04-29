@@ -4,6 +4,7 @@ from gui.theme import (
     PRIMARY, PRIMARY_DARK, SUCCESS, ERROR, WARNING,
     CARD_BG, BORDER, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_HINT,
     FONT_SECTION, FONT_BODY, FONT_CAPTION, FONT_STAT_VALUE, FONT_STAT_TITLE,
+    FONT_LIST_TITLE, FONT_ICON_SM, FONT_ICON_MD, FONT_PAGE_TITLE,
     CORNER_RADIUS_CARD, CORNER_RADIUS_BTN, ACCENT_GREEN, ACCENT_RED,
     make_font,
 )
@@ -96,39 +97,34 @@ class RepoListItem(ctk.CTkFrame):
         row = ctk.CTkFrame(self, fg_color="transparent")
         row.pack(fill="x", padx=12, pady=8)
 
-        rank_label = ctk.CTkLabel(
-            row, text=f"#{rank}", font=ctk.CTkFont(size=13, weight="bold"),
+        ctk.CTkLabel(
+            row, text=f"#{rank}", font=make_font(FONT_LIST_TITLE),
             text_color=PRIMARY, width=30,
-        )
-        rank_label.pack(side="left")
+        ).pack(side="left")
 
-        name_label = ctk.CTkLabel(
+        ctk.CTkLabel(
             row, text=full_name, font=make_font(FONT_BODY), anchor="w",
             text_color=TEXT_PRIMARY,
-        )
-        name_label.pack(side="left", fill="x", expand=True, padx=(4, 8))
+        ).pack(side="left", fill="x", expand=True, padx=(4, 8))
 
         if stars_growth > 0:
-            growth_label = ctk.CTkLabel(
+            ctk.CTkLabel(
                 row, text=f"+{stars_growth}",
                 font=make_font(FONT_CAPTION),
                 text_color=(ACCENT_GREEN, SUCCESS),
-            )
-            growth_label.pack(side="left", padx=4)
+            ).pack(side="left", padx=4)
 
-        score_label = ctk.CTkLabel(
+        ctk.CTkLabel(
             row, text=f"{eval_score:.0f}pts",
             font=make_font(FONT_CAPTION),
             text_color=(PRIMARY_DARK, PRIMARY),
-        )
-        score_label.pack(side="left", padx=4)
+        ).pack(side="left", padx=4)
 
         if language:
-            lang_label = ctk.CTkLabel(
+            ctk.CTkLabel(
                 row, text=language, font=make_font(FONT_CAPTION),
                 text_color=TEXT_SECONDARY,
-            )
-            lang_label.pack(side="left", padx=4)
+            ).pack(side="left", padx=4)
 
 
 class RuleCard(ctk.CTkFrame):
@@ -143,19 +139,17 @@ class RuleCard(ctk.CTkFrame):
         header.pack(fill="x", padx=12, pady=(10, 4))
 
         enabled = self._rule_data.get("enabled", True)
-        status_dot = ctk.CTkLabel(
+        ctk.CTkLabel(
             header, text="\u25CF" if enabled else "\u25CB",
-            font=ctk.CTkFont(size=14),
+            font=make_font(FONT_ICON_SM),
             text_color=SUCCESS if enabled else TEXT_HINT,
-        )
-        status_dot.pack(side="left")
+        ).pack(side="left")
 
-        self._name_label = ctk.CTkLabel(
+        ctk.CTkLabel(
             header, text=self._rule_data.get("name", ""),
-            font=ctk.CTkFont(size=13, weight="bold"),
+            font=make_font(FONT_LIST_TITLE),
             text_color=TEXT_PRIMARY,
-        )
-        self._name_label.pack(side="left", padx=8)
+        ).pack(side="left", padx=8)
 
         btn_frame = ctk.CTkFrame(header, fg_color="transparent")
         btn_frame.pack(side="right")
@@ -282,7 +276,7 @@ class MessageBox(ctk.CTkToplevel):
         icon_frame.pack_propagate(False)
         ctk.CTkLabel(
             icon_frame, text=icon_text,
-            font=ctk.CTkFont(size=16, weight="bold"),
+            font=make_font(FONT_ICON_MD),
             text_color="white",
         ).pack(expand=True)
 
@@ -312,7 +306,7 @@ class PageHeader(ctk.CTkFrame):
 
         ctk.CTkLabel(
             self, text=title,
-            font=ctk.CTkFont(size=20, weight="bold"),
+            font=make_font(FONT_PAGE_TITLE),
             text_color=TEXT_PRIMARY,
         ).pack(side="left")
 

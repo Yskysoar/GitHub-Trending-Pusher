@@ -9,24 +9,10 @@ from gui.theme import (
     ACCENT_GREEN, ACCENT_PURPLE, ACCENT_RED, ACCENT_ORANGE,
     FONT_BODY, FONT_CAPTION, FONT_BTN, FONT_BTN_BOLD,
     CORNER_RADIUS_CARD, CORNER_RADIUS_BTN,
+    SECTION_COLORS, SECTION_ICONS,
 )
 from gui.components.widgets import SectionCard, FieldRow, PageHeader, PageDivider
 from service.settings_service import SettingsService
-
-SECTION_COLORS = {
-    "github": ACCENT_GREEN,
-    "llm": PRIMARY,
-    "evaluation": ACCENT_PURPLE,
-    "output": ACCENT_RED,
-    "app": ACCENT_ORANGE,
-}
-SECTION_ICONS = {
-    "github": "\u25C8",
-    "llm": "\u2B21",
-    "evaluation": "\u25C6",
-    "output": "\u25CE",
-    "app": "\u2699",
-}
 
 
 class SettingsPage(ctk.CTkScrollableFrame):

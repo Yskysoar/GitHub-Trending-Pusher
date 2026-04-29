@@ -41,26 +41,28 @@ SECTION_ICONS = {
 }
 
 FONT_PAGE_TITLE = (20, "bold")
+FONT_DIALOG_TITLE = (16, "bold")
 FONT_SECTION = (14, "bold")
-FONT_BODY = (12, "normal")
-FONT_CAPTION = (11, "normal")
-FONT_BTN = (12, "normal")
-FONT_BTN_BOLD = (12, "bold")
-FONT_STAT_VALUE = (28, "bold")
-FONT_STAT_TITLE = (11, "normal")
+FONT_LIST_TITLE = (13, "bold")
 FONT_NAV = (13, "normal")
 FONT_SIDEBAR_TITLE = (13, "bold")
+FONT_BODY = (12, "normal")
+FONT_BTN = (12, "normal")
+FONT_BTN_BOLD = (12, "bold")
+FONT_CAPTION = (11, "normal")
 FONT_STATUS = (11, "normal")
+FONT_STAT_VALUE = (28, "bold")
+FONT_STAT_TITLE = (11, "normal")
+FONT_ICON_SM = (14, "normal")
+FONT_ICON_MD = (16, "bold")
+FONT_LOGO = (20, "bold")
+FONT_LOGO_SUB = (14, "bold")
 
 _font_cache = {}
 
 
 def make_font(spec: tuple) -> ctk.CTkFont:
-    """根据字体规格创建或获取缓存的CTkFont对象。
-
-    Args:
-        spec: (size, weight) 元组，如 (12, "normal") 或 (14, "bold")。
-    """
+    """根据字体规格创建或获取缓存的CTkFont对象。"""
     if spec not in _font_cache:
         _font_cache[spec] = ctk.CTkFont(size=spec[0], weight=spec[1])
     return _font_cache[spec]

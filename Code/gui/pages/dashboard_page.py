@@ -4,8 +4,8 @@ from gui.theme import (
     make_font,
     PRIMARY, PRIMARY_DARK, SUCCESS, WARNING, ERROR,
     CARD_BG, BORDER, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_HINT,
-    FONT_BODY, FONT_CAPTION, FONT_NAV, FONT_SIDEBAR_TITLE, FONT_STATUS,
-    CORNER_RADIUS_CARD, CORNER_RADIUS_BTN, SIDEBAR_WIDTH, STATUSBAR_HEIGHT,
+    FONT_BODY, FONT_CAPTION, FONT_SECTION, FONT_STAT_TITLE,
+    CORNER_RADIUS_CARD, CORNER_RADIUS_BTN,
 )
 from gui.components.widgets import StatCard, RepoListItem, PageHeader, PageDivider
 from service.dashboard_service import DashboardService
@@ -37,7 +37,7 @@ class DashboardPage(ctk.CTkScrollableFrame):
 
         top_label = ctk.CTkLabel(
             self, text="TOP 5 推荐项目",
-            font=ctk.CTkFont(size=14, weight="bold"),
+            font=make_font(FONT_SECTION),
             text_color=TEXT_PRIMARY,
         )
         top_label.pack(anchor="w", padx=20, pady=(4, 8))
@@ -53,7 +53,7 @@ class DashboardPage(ctk.CTkScrollableFrame):
 
         latest_label = ctk.CTkLabel(
             self, text="最新推送日志",
-            font=ctk.CTkFont(size=14, weight="bold"),
+            font=make_font(FONT_SECTION),
             text_color=TEXT_PRIMARY,
         )
         latest_label.pack(anchor="w", padx=20, pady=(4, 8))

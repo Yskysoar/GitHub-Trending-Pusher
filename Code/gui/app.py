@@ -6,6 +6,7 @@ import customtkinter as ctk
 
 from config.settings import Settings
 from core.scheduler import Scheduler
+from database.connection import DatabaseConnection
 from gui.theme import (
     PRIMARY, PRIMARY_DARK, PRIMARY_LIGHT, SUCCESS, WARNING, ERROR,
     SURFACE, SIDEBAR_BG, CARD_BG, BORDER, DIVIDER,
@@ -37,10 +38,11 @@ class App(ctk.CTk):
     def __init__(self):
         super().__init__()
         self._settings = Settings.get_instance()
-        self._settings_svc = SettingsService(self._settings)
-        self._dashboard_svc = DashboardService()
-        self._rule_svc = RuleService()
-        self._history_svc = HistoryService()
+        self._db = DatabaseConnection.get_instance()
+        self._settings_svc = SettingsService(self._db, self._settings)
+        self._dashboard_svc = DashboardService(self._db)
+        self._rule_svc = RuleService(self._db)
+        self._history_svc = HistoryService(self._db)
         self._scheduler = Scheduler(self._settings)
         self._pages: dict[str, ctk.CTkFrame] = {}
         self._current_page: str = ""

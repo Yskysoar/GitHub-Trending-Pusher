@@ -13,7 +13,41 @@
     "api_key": "",
     "model": "GLM-4.7",
     "temperature": 0.7,
-    "max_tokens": 4096
+    "max_tokens": 4096,
+    "providers": {
+      "openai": {
+        "name": "OpenAI",
+        "base_url": "https://api.openai.com/v1"
+      },
+      "volcengine": {
+        "name": "火山方舟",
+        "base_url": "https://ark.cn-beijing.volces.com/api/v3"
+      },
+      "deepseek": {
+        "name": "DeepSeek",
+        "base_url": "https://api.deepseek.com/v1"
+      },
+      "zhipuai": {
+        "name": "智谱AI",
+        "base_url": "https://open.bigmodel.cn/api/paas/v4"
+      },
+      "moonshot": {
+        "name": "月之暗面",
+        "base_url": "https://api.moonshot.cn/v1"
+      },
+      "siliconflow": {
+        "name": "硅基流动",
+        "base_url": "https://api.siliconflow.cn/v1"
+      },
+      "dashscope": {
+        "name": "阿里云百炼",
+        "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1"
+      },
+      "custom": {
+        "name": "自定义",
+        "base_url": ""
+      }
+    }
   },
   "evaluation": {
     "top_n": 10,

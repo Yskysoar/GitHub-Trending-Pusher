@@ -1,3 +1,5 @@
+import threading
+
 import customtkinter as ctk
 
 from service.settings_service import SettingsService
@@ -12,6 +14,7 @@ class SettingsPage(ctk.CTkScrollableFrame):
     def __init__(self, master, settings_svc: SettingsService, **kwargs):
         super().__init__(master, **kwargs)
         self._svc = settings_svc
+        self._fetched_models: list[str] = []
         self._build_ui()
 
     def _build_ui(self) -> None:
@@ -116,24 +119,126 @@ class SettingsPage(ctk.CTkScrollableFrame):
         ctk.CTkLabel(frame, text="大模型配置",
                      font=ctk.CTkFont(size=14, weight="bold")).pack(anchor="w", padx=12, pady=(10, 6))
 
-        row = ctk.CTkFrame(frame, fg_color="transparent")
-        row.pack(fill="x", padx=12, pady=4)
-        ctk.CTkLabel(row, text="API Key", font=ctk.CTkFont(size=12)).pack(side="left")
-        self._api_key_entry = ctk.CTkEntry(row, show="•", width=280)
-        self._api_key_entry.pack(side="left", padx=8)
-        ctk.CTkButton(row, text="测试", width=50, command=self._test_llm).pack(side="left")
+        row_provider = ctk.CTkFrame(frame, fg_color="transparent")
+        row_provider.pack(fill="x", padx=12, pady=4)
+        ctk.CTkLabel(row_provider, text="代理厂家", font=ctk.CTkFont(size=12)).pack(side="left")
+        self._provider_menu = ctk.CTkOptionMenu(
+            row_provider, values=["火山方舟"], width=160,
+            command=self._on_provider_changed,
+        )
+        self._provider_menu.pack(side="left", padx=8)
 
-        row2 = ctk.CTkFrame(frame, fg_color="transparent")
-        row2.pack(fill="x", padx=12, pady=4)
-        ctk.CTkLabel(row2, text="Base URL", font=ctk.CTkFont(size=12)).pack(side="left")
-        self._base_url_entry = ctk.CTkEntry(row2, width=300)
+        row_key = ctk.CTkFrame(frame, fg_color="transparent")
+        row_key.pack(fill="x", padx=12, pady=4)
+        ctk.CTkLabel(row_key, text="API Key", font=ctk.CTkFont(size=12)).pack(side="left")
+        self._api_key_entry = ctk.CTkEntry(row_key, show="•", width=240)
+        self._api_key_entry.pack(side="left", padx=8)
+        ctk.CTkButton(row_key, text="测试", width=50, command=self._test_llm).pack(side="left", padx=(0, 4))
+        ctk.CTkButton(row_key, text="获取模型", width=70, command=self._fetch_models).pack(side="left")
+
+        row_url = ctk.CTkFrame(frame, fg_color="transparent")
+        row_url.pack(fill="x", padx=12, pady=4)
+        ctk.CTkLabel(row_url, text="Base URL", font=ctk.CTkFont(size=12)).pack(side="left")
+        self._base_url_entry = ctk.CTkEntry(row_url, width=300)
         self._base_url_entry.pack(side="left", padx=8)
 
-        row3 = ctk.CTkFrame(frame, fg_color="transparent")
-        row3.pack(fill="x", padx=12, pady=(4, 10))
-        ctk.CTkLabel(row3, text="模型名称", font=ctk.CTkFont(size=12)).pack(side="left")
-        self._model_entry = ctk.CTkEntry(row3, width=200)
-        self._model_entry.pack(side="left", padx=8)
+        row_model = ctk.CTkFrame(frame, fg_color="transparent")
+        row_model.pack(fill="x", padx=12, pady=4)
+        ctk.CTkLabel(row_model, text="模型选择", font=ctk.CTkFont(size=12)).pack(side="left")
+        self._model_menu = ctk.CTkOptionMenu(row_model, values=["GLM-4.7"], width=200)
+        self._model_menu.pack(side="left", padx=8)
+
+        row_custom = ctk.CTkFrame(frame, fg_color="transparent")
+        row_custom.pack(fill="x", padx=12, pady=(4, 10))
+        ctk.CTkLabel(row_custom, text="自定义模型", font=ctk.CTkFont(size=12)).pack(side="left")
+        self._custom_model_entry = ctk.CTkEntry(row_custom, width=200, placeholder_text="留空则使用上方选择的模型")
+        self._custom_model_entry.pack(side="left", padx=8)
+
+        self._model_hint_label = ctk.CTkLabel(
+            frame, text="提示：输入API Key后点击"获取模型"可加载可用模型列表，也可直接在"自定义模型"中输入",
+            font=ctk.CTkFont(size=11),
+            text_color=("gray50", "gray200"),
+        )
+        self._model_hint_label.pack(anchor="w", padx=12, pady=(0, 10))
+
+    def _on_provider_changed(self, selected: str) -> None:
+        """厂家选择变更回调。"""
+        provider_key = self._get_provider_key_by_name(selected)
+        if provider_key:
+            providers = self._svc.get_settings_for_edit().get("llm", {}).get("providers", {})
+            provider_info = providers.get(provider_key, {})
+            base_url = provider_info.get("base_url", "")
+            self._base_url_entry.delete(0, "end")
+            self._base_url_entry.insert(0, base_url)
+
+            if provider_key == "custom":
+                self._base_url_entry.configure(state="normal")
+            else:
+                self._base_url_entry.configure(state="normal")
+
+    def _get_provider_key_by_name(self, name: str) -> str | None:
+        """根据厂家显示名称获取配置key。"""
+        providers = self._svc.get_settings_for_edit().get("llm", {}).get("providers", {})
+        for key, info in providers.items():
+            if info.get("name") == name:
+                return key
+        return None
+
+    def _get_provider_name_by_key(self, key: str) -> str:
+        """根据配置key获取厂家显示名称。"""
+        providers = self._svc.get_settings_for_edit().get("llm", {}).get("providers", {})
+        return providers.get(key, {}).get("name", key)
+
+    def _fetch_models(self) -> None:
+        """获取可用模型列表。"""
+        api_key = self._api_key_entry.get().strip()
+        base_url = self._base_url_entry.get().strip()
+
+        if not api_key:
+            from gui.components.widgets import MessageBox
+            MessageBox(self.winfo_toplevel(), title="获取模型", message="请先输入API Key", icon="warning")
+            return
+
+        self._model_menu.configure(values=["加载中..."])
+        self._model_menu.set("加载中...")
+
+        def _do_fetch():
+            result = self._svc.fetch_available_models(
+                api_key=api_key if api_key else None,
+                base_url=base_url if base_url else None,
+            )
+            self.after(0, lambda: self._on_models_fetched(result))
+
+        thread = threading.Thread(target=_do_fetch, daemon=True)
+        thread.start()
+
+    def _on_models_fetched(self, result: dict) -> None:
+        """模型列表获取完成回调。"""
+        from gui.components.widgets import MessageBox
+
+        if result.get("success"):
+            models = result.get("models", [])
+            self._fetched_models = models
+            if models:
+                display_values = models + ["自定义"]
+                self._model_menu.configure(values=display_values)
+                self._model_menu.set(models[0])
+            else:
+                self._model_menu.configure(values=["自定义"])
+                self._model_menu.set("自定义")
+            MessageBox(
+                self.winfo_toplevel(), title="获取模型",
+                message=result.get("message", "获取成功"),
+                icon="check",
+            )
+        else:
+            self._model_menu.configure(values=["自定义"])
+            self._model_menu.set("自定义")
+            MessageBox(
+                self.winfo_toplevel(), title="获取模型",
+                message=result.get("message", "获取失败"),
+                icon="cancel",
+            )
 
     def _build_output_section(self) -> None:
         """输出设置区域。"""
@@ -210,12 +315,26 @@ class SettingsPage(ctk.CTkScrollableFrame):
             entry.insert(0, str(weights.get(key, 0.0)))
 
         llm = config.get("llm", {})
+        providers = llm.get("providers", {})
+        provider_names = [info.get("name", key) for key, info in providers.items()]
+        self._provider_menu.configure(values=provider_names)
+
+        current_provider_key = llm.get("provider", "volcengine")
+        current_provider_name = self._get_provider_name_by_key(current_provider_key)
+        self._provider_menu.set(current_provider_name)
+
         self._api_key_entry.delete(0, "end")
         self._api_key_entry.insert(0, llm.get("api_key", ""))
+
         self._base_url_entry.delete(0, "end")
         self._base_url_entry.insert(0, llm.get("base_url", ""))
-        self._model_entry.delete(0, "end")
-        self._model_entry.insert(0, llm.get("model", "GLM-4.7"))
+
+        current_model = llm.get("model", "GLM-4.7")
+        self._fetched_models = []
+        self._model_menu.configure(values=[current_model, "自定义"])
+        self._model_menu.set(current_model)
+
+        self._custom_model_entry.delete(0, "end")
 
         out = config.get("output", {})
         self._save_dir_entry.delete(0, "end")
@@ -239,6 +358,15 @@ class SettingsPage(ctk.CTkScrollableFrame):
                 return
             self._weight_sum_label.configure(text=f"权重之和: {weight_sum:.2f}", text_color=("gray50", "gray200"))
 
+            provider_name = self._provider_menu.get()
+            provider_key = self._get_provider_key_by_name(provider_name)
+
+            selected_model = self._model_menu.get()
+            custom_model = self._custom_model_entry.get().strip()
+            final_model = custom_model if custom_model else selected_model
+            if final_model == "自定义":
+                final_model = ""
+
             settings_data = {
                 "github": {
                     "token": self._token_entry.get().strip(),
@@ -247,9 +375,10 @@ class SettingsPage(ctk.CTkScrollableFrame):
                     "min_stars": int(self._min_stars_entry.get().strip() or "100"),
                 },
                 "llm": {
+                    "provider": provider_key or "custom",
                     "api_key": self._api_key_entry.get().strip(),
                     "base_url": self._base_url_entry.get().strip(),
-                    "model": self._model_entry.get().strip(),
+                    "model": final_model,
                 },
                 "evaluation": {
                     "top_n": int(self._top_n_entry.get().strip() or "10"),
@@ -295,7 +424,18 @@ class SettingsPage(ctk.CTkScrollableFrame):
     def _test_llm(self) -> None:
         """测试LLM连接。"""
         api_key = self._api_key_entry.get().strip()
-        result = self._svc.test_llm_connection(api_key=api_key if api_key else None)
+        base_url = self._base_url_entry.get().strip()
+        selected_model = self._model_menu.get()
+        custom_model = self._custom_model_entry.get().strip()
+        model = custom_model if custom_model else selected_model
+        if model == "自定义":
+            model = None
+
+        result = self._svc.test_llm_connection(
+            api_key=api_key if api_key else None,
+            base_url=base_url if base_url else None,
+            model=model,
+        )
         msg = result.get("message", "")
         from gui.components.widgets import MessageBox
         if result.get("success"):

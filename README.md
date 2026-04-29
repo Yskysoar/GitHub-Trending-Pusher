@@ -81,9 +81,11 @@ pip install -r requirements.txt
 ### 配置
 
 1. 复制默认配置模板（首次启动会自动生成 `app_config.json`）
-2. 在 `app_config.json` 中填入以下配置：
-   - `github.token`：GitHub Personal Access Token（仅需 `public_repo` 权限）
-   - `llm.api_key`：火山方舟 API Key
+2. 在GUI设置页面中配置：
+   - **GitHub Token**：GitHub Personal Access Token（仅需 `public_repo` 权限）
+   - **代理厂家**：选择LLM API代理厂家（支持OpenAI、火山方舟、DeepSeek、智谱AI、月之暗面、硅基流动、阿里云百炼或自定义）
+   - **API Key**：对应代理厂家的API Key
+   - **模型**：点击"获取模型"自动获取可用模型列表，或手动输入自定义模型名称
 
 或通过环境变量配置：
 

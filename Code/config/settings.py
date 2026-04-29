@@ -68,6 +68,9 @@ class Settings:
 
     def _get_default_config(self) -> dict:
         """获取默认配置字典。"""
+        if DEFAULT_CONFIG_FILE.exists():
+            with open(DEFAULT_CONFIG_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
         return {
             "github": {
                 "token": "",
@@ -180,6 +183,14 @@ class Settings:
     @property
     def github_token(self) -> str:
         return self.get("github.token", "")
+
+    @property
+    def llm_provider(self) -> str:
+        return self.get("llm.provider", "volcengine")
+
+    @property
+    def llm_providers(self) -> dict:
+        return self.get("llm.providers", {})
 
     @property
     def llm_api_key(self) -> str:

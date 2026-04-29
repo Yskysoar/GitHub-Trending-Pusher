@@ -8,7 +8,7 @@
     "growth_period": "daily"
   },
   "llm": {
-    "provider": "volcengine",
+    "provider": "volcengine_coding",
     "base_url": "https://ark.cn-beijing.volces.com/api/v3",
     "api_key": "",
     "model": "GLM-4.7",
@@ -17,35 +17,64 @@
     "providers": {
       "openai": {
         "name": "OpenAI",
-        "base_url": "https://api.openai.com/v1"
+        "base_url": "https://api.openai.com/v1",
+        "plans": [
+          {"name": "按量计费", "model": "gpt-4o-mini", "desc": "GPT-4o Mini，经济实惠"}
+        ]
+      },
+      "volcengine_coding": {
+        "name": "火山方舟 Coding Plan",
+        "base_url": "https://ark.cn-beijing.volces.com/api/v3",
+        "plans": [
+          {"name": "Coding Plan", "model": "GLM-4.7", "desc": "编程专用，性价比高"}
+        ]
       },
       "volcengine": {
-        "name": "火山方舟",
-        "base_url": "https://ark.cn-beijing.volces.com/api/v3"
+        "name": "火山方舟 按量计费",
+        "base_url": "https://ark.cn-beijing.volces.com/api/v3",
+        "plans": [
+          {"name": "按量计费", "model": "", "desc": "需使用Endpoint ID作为模型名"}
+        ]
       },
       "deepseek": {
         "name": "DeepSeek",
-        "base_url": "https://api.deepseek.com/v1"
+        "base_url": "https://api.deepseek.com/v1",
+        "plans": [
+          {"name": "按量计费", "model": "deepseek-chat", "desc": "DeepSeek-V3，性价比极高"}
+        ]
       },
       "zhipuai": {
         "name": "智谱AI",
-        "base_url": "https://open.bigmodel.cn/api/paas/v4"
+        "base_url": "https://open.bigmodel.cn/api/paas/v4",
+        "plans": [
+          {"name": "按量计费", "model": "glm-4-flash", "desc": "GLM-4-Flash，免费额度"}
+        ]
       },
       "moonshot": {
         "name": "月之暗面",
-        "base_url": "https://api.moonshot.cn/v1"
+        "base_url": "https://api.moonshot.cn/v1",
+        "plans": [
+          {"name": "按量计费", "model": "moonshot-v1-8k", "desc": "Kimi大模型"}
+        ]
       },
       "siliconflow": {
         "name": "硅基流动",
-        "base_url": "https://api.siliconflow.cn/v1"
+        "base_url": "https://api.siliconflow.cn/v1",
+        "plans": [
+          {"name": "按量计费", "model": "deepseek-ai/DeepSeek-V3", "desc": "多模型可用"}
+        ]
       },
       "dashscope": {
         "name": "阿里云百炼",
-        "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1"
+        "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+        "plans": [
+          {"name": "按量计费", "model": "qwen-plus", "desc": "通义千问Plus"}
+        ]
       },
       "custom": {
         "name": "自定义",
-        "base_url": ""
+        "base_url": "",
+        "plans": []
       }
     }
   },

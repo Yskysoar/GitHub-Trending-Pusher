@@ -1,272 +1,276 @@
+import os
 import sys
 import threading
-import customtkinter as ctk
-from loguru import logger
 
-from database.connection import DatabaseConnection
+import customtkinter as ctk
+
 from config.settings import Settings
+from core.scheduler import Scheduler
+from gui.theme import (
+    PRIMARY, PRIMARY_DARK, PRIMARY_LIGHT, SUCCESS, WARNING, ERROR,
+    SURFACE, SIDEBAR_BG, CARD_BG, BORDER, DIVIDER,
+    TEXT_PRIMARY, TEXT_SECONDARY, TEXT_HINT,
+    FONT_PAGE_TITLE, FONT_SECTION, FONT_BODY, FONT_CAPTION,
+    FONT_NAV, FONT_SIDEBAR_TITLE, FONT_STATUS, FONT_BTN_BOLD,
+    CORNER_RADIUS_CARD, CORNER_RADIUS_BTN,
+    SIDEBAR_WIDTH, STATUSBAR_HEIGHT,
+)
+from gui.components.widgets import ProgressDialog
 from service.dashboard_service import DashboardService
-from service.rule_service import RuleService
 from service.history_service import HistoryService
+from service.rule_service import RuleService
 from service.settings_service import SettingsService
-from service.task_service import TaskService
-from core.scheduler import TaskCallback, AppError
+from utils.helpers import sanitize_ascii
+
+NAV_ITEMS = [
+    ("dashboard", "\u25C8  \u63A8\u9001\u6982\u89C8"),
+    ("rules",     "\u25C6  \u63A8\u9001\u89C4\u5219"),
+    ("history",   "\u25CE  \u5386\u53F2\u8BB0\u5F55"),
+    ("settings",  "\u2699  \u7CFB\u7EDF\u8BBE\u7F6E"),
+]
 
 
 class App(ctk.CTk):
-    """主窗口应用。
-
-    包含侧边栏导航、全局操作（立即执行、开机自启）、系统托盘和状态栏。
-    """
+    """主应用窗口。"""
 
     def __init__(self):
         super().__init__()
+        self._settings = Settings.get_instance()
+        self._settings_svc = SettingsService(self._settings)
+        self._dashboard_svc = DashboardService()
+        self._rule_svc = RuleService()
+        self._history_svc = HistoryService()
+        self._scheduler = Scheduler(self._settings)
+        self._pages: dict[str, ctk.CTkFrame] = {}
+        self._current_page: str = ""
 
-        self.title("GitHub热点推送")
+        self.title("GitHub \u70ED\u70B9\u63A8\u9001")
         self.geometry("960x640")
         self.minsize(800, 500)
-        self._tray_icon = None
-        self._tray_thread = None
 
-        ctk.set_appearance_mode("system")
+        theme = self._settings.get("app.theme", "system")
+        ctk.set_appearance_mode(theme)
         ctk.set_default_color_theme("blue")
 
-        self._init_services()
         self._build_ui()
-        self._init_system_tray()
-        self._check_first_run()
 
-    def _init_services(self) -> None:
-        """初始化服务层。"""
-        self._db = DatabaseConnection.get_instance()
-        self._settings = Settings.get_instance()
-        self._dashboard_svc = DashboardService(self._db)
-        self._rule_svc = RuleService(self._db)
-        self._history_svc = HistoryService(self._db)
-        self._settings_svc = SettingsService(self._db, self._settings)
-        self._task_svc = TaskService(self._db, self._settings)
-        self._task_svc.set_callback(self._create_task_callback())
+        if not self._settings.github_token and not self._settings.llm_api_key:
+            self.after(500, self._show_welcome_dialog)
 
     def _build_ui(self) -> None:
-        """构建UI。"""
-        self.grid_columnconfigure(1, weight=1)
-        self.grid_rowconfigure(1, weight=1)
-
         self._build_sidebar()
-        self._build_content_area()
+        self._build_main_area()
         self._build_statusbar()
-
-    def _build_sidebar(self) -> None:
-        """构建侧边栏。"""
-        self._sidebar = ctk.CTkFrame(self, width=160, corner_radius=0)
-        self._sidebar.grid(row=0, column=0, rowspan=2, sticky="nsew")
-        self._sidebar.grid_rowconfigure(8, weight=1)
-
-        title_label = ctk.CTkLabel(
-            self._sidebar, text="🔵 GitHub热点推送",
-            font=ctk.CTkFont(size=14, weight="bold"), corner_radius=8,
-        )
-        title_label.grid(row=0, column=0, padx=12, pady=(16, 20))
-
-        self._nav_buttons = {}
-        nav_items = [
-            ("dashboard", "🏠 仪表盘", 1),
-            ("rules", "📋 推送规则", 2),
-            ("history", "📁 历史记录", 3),
-            ("settings", "⚙️ 系统设置", 4),
-        ]
-        for key, text, row in nav_items:
-            btn = ctk.CTkButton(
-                self._sidebar, text=text, anchor="w",
-                font=ctk.CTkFont(size=13),
-                fg_color="transparent",
-                text_color=("gray10", "gray90"),
-                hover_color=("gray75", "gray30"),
-                command=lambda k=key: self._switch_page(k),
-            )
-            btn.grid(row=row, column=0, padx=8, pady=4, sticky="ew")
-            self._nav_buttons[key] = btn
-
-        sep = ctk.CTkFrame(self._sidebar, height=1, fg_color=("gray75", "gray30"))
-        sep.grid(row=5, column=0, padx=16, pady=8, sticky="ew")
-
-        self._run_btn = ctk.CTkButton(
-            self._sidebar, text="▶ 立即执行",
-            font=ctk.CTkFont(size=13),
-            command=self._on_run_task,
-        )
-        self._run_btn.grid(row=6, column=0, padx=12, pady=4, sticky="ew")
-
-        self._autostart_var = ctk.BooleanVar(
-            value=self._settings.get("autostart.enabled", False)
-        )
-        self._autostart_cb = ctk.CTkCheckBox(
-            self._sidebar, text="开机自启",
-            variable=self._autostart_var,
-            font=ctk.CTkFont(size=12),
-            command=self._on_toggle_autostart,
-        )
-        self._autostart_cb.grid(row=7, column=0, padx=12, pady=4, sticky="w")
-
-        self._nav_buttons["dashboard"].configure(fg_color=("#1F6FEB", "#1F6FEB"))
-
-    def _build_content_area(self) -> None:
-        """构建内容区域。"""
-        self._content = ctk.CTkFrame(self, fg_color="transparent")
-        self._content.grid(row=0, column=1, sticky="nsew", padx=8, pady=(8, 0))
-
-        self._pages = {}
-        self._current_page = None
         self._switch_page("dashboard")
 
+    def _build_sidebar(self) -> None:
+        self._sidebar = ctk.CTkFrame(
+            self, width=SIDEBAR_WIDTH, corner_radius=0,
+            fg_color=SIDEBAR_BG,
+        )
+        self._sidebar.pack(side="left", fill="y")
+        self._sidebar.pack_propagate(False)
+
+        logo_frame = ctk.CTkFrame(self._sidebar, fg_color="transparent")
+        logo_frame.pack(fill="x", padx=16, pady=(20, 4))
+
+        ctk.CTkLabel(
+            logo_frame, text="GH",
+            font=ctk.CTkFont(size=20, weight="bold"),
+            text_color=PRIMARY,
+        ).pack(side="left")
+
+        ctk.CTkLabel(
+            logo_frame, text=" Trending",
+            font=ctk.CTkFont(size=14, weight="bold"),
+            text_color=TEXT_PRIMARY,
+        ).pack(side="left")
+
+        ctk.CTkLabel(
+            self._sidebar, text="GitHub \u70ED\u70B9\u63A8\u9001",
+            font=FONT_CAPTION, text_color=TEXT_HINT,
+        ).pack(anchor="w", padx=16, pady=(0, 16))
+
+        sep = ctk.CTkFrame(self._sidebar, height=1, fg_color=DIVIDER)
+        sep.pack(fill="x", padx=12, pady=(0, 8))
+
+        self._nav_buttons: dict[str, ctk.CTkButton] = {}
+        for key, label in NAV_ITEMS:
+            btn = ctk.CTkButton(
+                self._sidebar, text=label,
+                font=FONT_NAV, anchor="w",
+                fg_color="transparent",
+                text_color=TEXT_SECONDARY,
+                hover_color=CARD_BG,
+                corner_radius=CORNER_RADIUS_BTN,
+                height=36,
+                command=lambda k=key: self._switch_page(k),
+            )
+            btn.pack(fill="x", padx=8, pady=2)
+            self._nav_buttons[key] = btn
+
+        sep2 = ctk.CTkFrame(self._sidebar, height=1, fg_color=DIVIDER)
+        sep2.pack(fill="x", padx=12, pady=(8, 8))
+
+        self._run_btn = ctk.CTkButton(
+            self._sidebar, text="\u25B6  \u7ACB\u5373\u6267\u884C",
+            font=FONT_BTN_BOLD,
+            fg_color=PRIMARY_DARK, hover_color=PRIMARY,
+            corner_radius=CORNER_RADIUS_BTN,
+            height=36,
+            command=self._run_pipeline,
+        )
+        self._run_btn.pack(fill="x", padx=8, pady=4)
+
+        self._scheduler_label = ctk.CTkLabel(
+            self._sidebar, text="",
+            font=FONT_CAPTION, text_color=TEXT_HINT,
+        )
+        self._scheduler_label.pack(anchor="w", padx=16, pady=(4, 0))
+
+    def _build_main_area(self) -> None:
+        self._main_area = ctk.CTkFrame(self, fg_color=SURFACE, corner_radius=0)
+        self._main_area.pack(side="left", fill="both", expand=True)
+
+        self._content_frame = ctk.CTkFrame(self._main_area, fg_color="transparent")
+        self._content_frame.pack(fill="both", expand=True, padx=0, pady=0)
+
     def _build_statusbar(self) -> None:
-        """构建状态栏。"""
-        self._statusbar = ctk.CTkFrame(self, height=28, corner_radius=0)
-        self._statusbar.grid(row=1, column=1, sticky="sew", padx=8, pady=(0, 4))
+        self._statusbar = ctk.CTkFrame(
+            self, height=STATUSBAR_HEIGHT, corner_radius=0,
+            fg_color=SIDEBAR_BG,
+        )
+        self._statusbar.pack(side="bottom", fill="x")
+        self._statusbar.pack_propagate(False)
 
         self._status_label = ctk.CTkLabel(
-            self._statusbar, text="就绪",
-            font=ctk.CTkFont(size=11),
-            text_color=("gray50", "gray200"),
+            self._statusbar, text="\u5C31\u7EEA",
+            font=FONT_STATUS, text_color=TEXT_HINT,
         )
         self._status_label.pack(side="left", padx=12)
 
+        self._status_right = ctk.CTkLabel(
+            self._statusbar, text="",
+            font=FONT_STATUS, text_color=TEXT_HINT,
+        )
+        self._status_right.pack(side="right", padx=12)
+
+        self._update_scheduler_status()
+
+    def _update_scheduler_status(self) -> None:
+        if self._settings.get("scheduler.enabled", True):
+            run_time = self._settings.get("scheduler.run_time", "09:00")
+            self._scheduler_label.configure(text=f"\u23F0 \u5B9A\u65F6: {run_time}")
+        else:
+            self._scheduler_label.configure(text="\u23F0 \u5B9A\u65F6\u5DF2\u7981\u7528")
+
     def _switch_page(self, page_key: str) -> None:
-        """切换页面。"""
+        if page_key == self._current_page:
+            return
+
         for key, btn in self._nav_buttons.items():
             if key == page_key:
-                btn.configure(fg_color=("#1F6FEB", "#1F6FEB"))
+                btn.configure(fg_color=CARD_BG, text_color=PRIMARY)
             else:
-                btn.configure(fg_color="transparent")
+                btn.configure(fg_color="transparent", text_color=TEXT_SECONDARY)
 
-        if self._current_page:
-            self._current_page.pack_forget()
+        if self._current_page and self._current_page in self._pages:
+            self._pages[self._current_page].pack_forget()
 
         if page_key not in self._pages:
             self._pages[page_key] = self._create_page(page_key)
 
-        self._pages[page_key].pack(in_=self._content, fill="both", expand=True)
-        self._current_page = self._pages[page_key]
+        page = self._pages[page_key]
+        if hasattr(page, "refresh"):
+            page.refresh()
+        page.pack(in_=self._content_frame, fill="both", expand=True)
 
-        if hasattr(self._current_page, "refresh"):
-            self._current_page.refresh()
+        self._current_page = page_key
 
     def _create_page(self, page_key: str) -> ctk.CTkFrame:
-        """创建页面实例。"""
-        from gui.pages.dashboard_page import DashboardPage
-        from gui.pages.rules_page import RulesPage
-        from gui.pages.history_page import HistoryPage
-        from gui.pages.settings_page import SettingsPage
+        if page_key == "dashboard":
+            from gui.pages.dashboard_page import DashboardPage
+            return DashboardPage(self._content_frame, dashboard_svc=self._dashboard_svc)
+        elif page_key == "rules":
+            from gui.pages.rules_page import RulesPage
+            return RulesPage(self._content_frame, rule_svc=self._rule_svc)
+        elif page_key == "history":
+            from gui.pages.history_page import HistoryPage
+            return HistoryPage(self._content_frame, history_svc=self._history_svc)
+        elif page_key == "settings":
+            from gui.pages.settings_page import SettingsPage
+            return SettingsPage(self._content_frame, settings_svc=self._settings_svc)
+        else:
+            return ctk.CTkFrame(self._content_frame)
 
-        page_map = {
-            "dashboard": lambda: DashboardPage(self._content, self._dashboard_svc),
-            "rules": lambda: RulesPage(self._content, self._rule_svc),
-            "history": lambda: HistoryPage(self._content, self._history_svc),
-            "settings": lambda: SettingsPage(self._content, self._settings_svc),
-        }
-        return page_map[page_key]()
+    def _run_pipeline(self) -> None:
+        self._run_btn.configure(state="disabled", text="\u25CC  \u6267\u884C\u4E2D...")
+        self._status_label.configure(text="\u6B63\u5728\u6267\u884C\u63A8\u9001\u4EFB\u52A1...", text_color=WARNING)
 
-    def _on_run_task(self) -> None:
-        """立即执行推送任务。"""
-        self._run_btn.configure(state="disabled", text="⏳ 执行中...")
-        self._status_label.configure(text="正在执行推送任务...")
-        self._task_svc.run_task_now()
+        def _do_run():
+            try:
+                self._scheduler.execute_pipeline()
+                self.after(0, lambda: self._on_pipeline_done(True))
+            except Exception as e:
+                self.after(0, lambda: self._on_pipeline_done(False, str(e)))
 
-    def _on_toggle_autostart(self) -> None:
-        """切换开机自启动。"""
-        enabled = self._autostart_var.get()
-        try:
-            self._task_svc.toggle_autostart(enabled)
-        except Exception as e:
-            logger.error(f"切换自启动失败: {e}")
-            self._autostart_var.set(not enabled)
+        threading.Thread(target=_do_run, daemon=True).start()
 
-    def _create_task_callback(self) -> TaskCallback:
-        """创建任务回调。"""
-        app = self
+    def _on_pipeline_done(self, success: bool, error: str = "") -> None:
+        self._run_btn.configure(state="normal", text="\u25B6  \u7ACB\u5373\u6267\u884C")
+        if success:
+            self._status_label.configure(text="\u63A8\u9001\u4EFB\u52A1\u5B8C\u6210", text_color=SUCCESS)
+        else:
+            self._status_label.configure(text=f"\u63A8\u9001\u5931\u8D25: {error}", text_color=ERROR)
 
-        class AppTaskCallback(TaskCallback):
-            def on_start(self) -> None:
-                pass
-
-            def on_progress(self, step: str, current: int, total: int) -> None:
-                app.after(0, lambda: app._status_label.configure(text=step))
-
-            def on_complete(self, result: dict) -> None:
-                app.after(0, lambda: app._on_task_complete(result))
-
-            def on_error(self, error: AppError) -> None:
-                app.after(0, lambda: app._on_task_error(error))
-
-        return AppTaskCallback()
-
-    def _on_task_complete(self, result: dict) -> None:
-        """任务完成回调。"""
-        self._run_btn.configure(state="normal", text="▶ 立即执行")
-        repo_count = result.get("repo_count", 0)
-        self._status_label.configure(text=f"推送完成: {repo_count} 个推荐项目")
-        if "dashboard" in self._pages and hasattr(self._pages["dashboard"], "refresh"):
+        if "dashboard" in self._pages:
             self._pages["dashboard"].refresh()
-        self._show_tray_notification("推送完成", f"已为您推荐 {repo_count} 个项目")
-
-    def _on_task_error(self, error: AppError) -> None:
-        """任务错误回调。"""
-        self._run_btn.configure(state="normal", text="▶ 立即执行")
-        self._status_label.configure(text=f"任务失败: {error.message}")
-        self._show_tray_notification("推送失败", error.message)
-
-    def _check_first_run(self) -> None:
-        """检测首次运行，弹出引导弹窗。"""
-        github_token = self._settings.github_token
-        llm_api_key = self._settings.llm_api_key
-
-        if not github_token or not llm_api_key:
-            self._show_welcome_dialog()
+        if "history" in self._pages:
+            self._pages["history"].refresh()
 
     def _show_welcome_dialog(self) -> None:
-        """显示首次运行引导弹窗。"""
         dialog = ctk.CTkToplevel(self)
-        dialog.title("欢迎使用 GitHub热点推送")
-        dialog.geometry("480x400")
+        dialog.title("\u6B22\u8FCE\u4F7F\u7528")
+        dialog.geometry("500x440")
         dialog.transient(self)
         dialog.grab_set()
 
         header = ctk.CTkFrame(dialog, fg_color="transparent")
         header.pack(fill="x", padx=24, pady=(20, 4))
-
         ctk.CTkLabel(
-            header, text="欢迎使用 GitHub热点推送",
-            font=ctk.CTkFont(size=18, weight="bold"),
-        ).pack(anchor="w")
-
+            header, text="GitHub \u70ED\u70B9\u63A8\u9001",
+            font=ctk.CTkFont(size=20, weight="bold"),
+            text_color=PRIMARY,
+        ).pack(side="left")
         ctk.CTkLabel(
-            dialog, text="为了正常使用，请完成以下配置：",
-            font=ctk.CTkFont(size=13),
-            text_color=("gray50", "gray200"),
+            dialog, text="\u4E3A\u4E86\u6B63\u5E38\u4F7F\u7528\uFF0C\u8BF7\u5B8C\u6210\u4EE5\u4E0B\u914D\u7F6E\uFF1A",
+            font=FONT_BODY, text_color=TEXT_SECONDARY,
         ).pack(anchor="w", padx=24, pady=(0, 12))
 
         ctk.CTkLabel(dialog, text="1. GitHub Personal Access Token",
-                     font=ctk.CTkFont(size=12, weight="bold"), anchor="w").pack(fill="x", padx=24, pady=(0, 2))
-        token_entry = ctk.CTkEntry(dialog, show="•", width=420, placeholder_text="ghp_xxxxxxxxxxxx")
+                     font=ctk.CTkFont(size=12, weight="bold"), anchor="w",
+                     text_color=TEXT_PRIMARY).pack(fill="x", padx=24, pady=(0, 2))
+        token_entry = ctk.CTkEntry(dialog, show="\u2022", width=440, placeholder_text="ghp_xxxxxxxxxxxx")
         token_entry.pack(padx=24, pady=(0, 12))
 
-        ctk.CTkLabel(dialog, text="2. LLM API 配置",
-                     font=ctk.CTkFont(size=12, weight="bold"), anchor="w").pack(fill="x", padx=24, pady=(0, 2))
+        ctk.CTkLabel(dialog, text="2. LLM API \u914D\u7F6E",
+                     font=ctk.CTkFont(size=12, weight="bold"), anchor="w",
+                     text_color=TEXT_PRIMARY).pack(fill="x", padx=24, pady=(0, 2))
 
         provider_frame = ctk.CTkFrame(dialog, fg_color="transparent")
         provider_frame.pack(fill="x", padx=24, pady=(0, 4))
-
-        ctk.CTkLabel(provider_frame, text="代理厂家", font=ctk.CTkFont(size=12), width=70).pack(side="left")
+        ctk.CTkLabel(provider_frame, text="\u4EE3\u7406\u5382\u5BB6", font=FONT_BODY, width=70).pack(side="left")
         providers = self._settings.llm_providers
         provider_names = [info.get("name", key) for key, info in providers.items()]
-        provider_menu = ctk.CTkOptionMenu(provider_frame, values=provider_names, width=160)
+        provider_menu = ctk.CTkOptionMenu(provider_frame, values=provider_names, width=180,
+                                           fg_color=CARD_BG, button_color=PRIMARY_DARK,
+                                           button_hover_color=PRIMARY, text_color=TEXT_PRIMARY)
         provider_menu.pack(side="left", padx=(0, 8))
 
         base_url_entry = ctk.CTkEntry(provider_frame, width=200, placeholder_text="Base URL")
         base_url_entry.pack(side="left")
 
         if providers:
-            first_key = list(providers.keys())[0]
             first_info = list(providers.values())[0]
             base_url_entry.insert(0, first_info.get("base_url", ""))
 
@@ -281,15 +285,14 @@ class App(ctk.CTk):
 
         key_frame = ctk.CTkFrame(dialog, fg_color="transparent")
         key_frame.pack(fill="x", padx=24, pady=(0, 4))
-
-        ctk.CTkLabel(key_frame, text="API Key", font=ctk.CTkFont(size=12), width=70).pack(side="left")
-        key_entry = ctk.CTkEntry(key_frame, show="•", width=350)
+        ctk.CTkLabel(key_frame, text="API Key", font=FONT_BODY, width=70).pack(side="left")
+        key_entry = ctk.CTkEntry(key_frame, show="\u2022", width=370)
         key_entry.pack(side="left")
 
         create_demo_var = ctk.BooleanVar(value=True)
         ctk.CTkCheckBox(
-            dialog, text="创建示例推送规则（AI大模型方向）",
-            variable=create_demo_var, font=ctk.CTkFont(size=12),
+            dialog, text="\u521B\u5EFA\u793A\u4F8B\u63A8\u9001\u89C4\u5219\uFF08AI\u5927\u6A21\u578B\u65B9\u5411\uFF09",
+            variable=create_demo_var, font=FONT_BODY, text_color=TEXT_PRIMARY,
         ).pack(padx=24, pady=8, anchor="w")
 
         btn_frame = ctk.CTkFrame(dialog, fg_color="transparent")
@@ -319,12 +322,17 @@ class App(ctk.CTk):
                 self._settings.set("llm.base_url", base_url)
             if provider_key:
                 self._settings.set("llm.provider", provider_key)
+
+            plans = providers.get(provider_key, {}).get("plans", [])
+            if plans and plans[0].get("model"):
+                self._settings.set("llm.model", plans[0]["model"])
+
             self._settings.save()
 
             if create_demo_var.get():
                 try:
                     self._rule_svc.add_rule({
-                        "name": "AI大模型技能",
+                        "name": "AI\u5927\u6A21\u578B\u6280\u80FD",
                         "keywords": ["AI", "LLM", "Agent", "RAG"],
                         "topics": ["machine-learning", "nlp"],
                         "language": "Python",
@@ -338,85 +346,10 @@ class App(ctk.CTk):
             dialog.grab_release()
             dialog.destroy()
 
-        ctk.CTkButton(btn_frame, text="稍后配置", command=on_skip,
-                       width=100, fg_color="transparent",
-                       border_width=1).pack(side="left", padx=8)
-        ctk.CTkButton(btn_frame, text="开始使用", command=on_start,
-                       width=100).pack(side="left", padx=8)
-
-    # ==================== 系统托盘 ====================
-
-    def _init_system_tray(self) -> None:
-        """初始化系统托盘。"""
-        try:
-            import pystray
-            from PIL import Image, ImageDraw
-
-            icon_size = 64
-            image = Image.new("RGBA", (icon_size, icon_size), (0, 0, 0, 0))
-            draw = ImageDraw.Draw(image)
-            draw.ellipse([8, 8, 56, 56], fill="#1F6FEB")
-            draw.ellipse([20, 20, 44, 44], fill="white")
-
-            menu = pystray.Menu(
-                pystray.MenuItem("显示窗口", self._tray_show_window, default=True),
-                pystray.MenuItem("立即执行", self._tray_run_task),
-                pystray.Menu.SEPARATOR,
-                pystray.MenuItem("退出", self._tray_exit),
-            )
-
-            self._tray_icon = pystray.Icon("github_pusher", image, "GitHub热点推送", menu)
-
-            self._tray_thread = threading.Thread(target=self._tray_icon.run, daemon=True)
-            self._tray_thread.start()
-            logger.info("系统托盘已初始化")
-        except Exception as e:
-            logger.warning(f"系统托盘初始化失败: {e}")
-            self._tray_icon = None
-
-    def _tray_show_window(self, icon=None, item=None) -> None:
-        """托盘：显示窗口。"""
-        self.after(0, self._restore_window)
-
-    def _restore_window(self) -> None:
-        """恢复窗口。"""
-        self.deiconify()
-        self.lift()
-        self.focus_force()
-
-    def _tray_run_task(self, icon=None, item=None) -> None:
-        """托盘：立即执行。"""
-        self.after(0, self._on_run_task)
-
-    def _tray_exit(self, icon=None, item=None) -> None:
-        """托盘：退出应用。"""
-        if self._tray_icon:
-            self._tray_icon.stop()
-        self.after(0, self._cleanup_and_exit)
-
-    def _show_tray_notification(self, title: str, message: str) -> None:
-        """显示托盘通知气泡。"""
-        if self._tray_icon:
-            try:
-                self._tray_icon.notify(message, title)
-            except Exception:
-                pass
-
-    # ==================== 窗口关闭 ====================
-
-    def on_closing(self) -> None:
-        """关闭窗口事件。"""
-        minimize_to_tray = self._settings.get("app.minimize_to_tray", True)
-        if minimize_to_tray and self._tray_icon:
-            self.withdraw()
-            self._show_tray_notification("GitHub热点推送", "应用已最小化到托盘")
-        else:
-            self._cleanup_and_exit()
-
-    def _cleanup_and_exit(self) -> None:
-        """清理并退出。"""
-        self._task_svc.stop_scheduler()
-        if self._tray_icon:
-            self._tray_icon.stop()
-        DatabaseConnection.get_instance().close()
-        self.destroy()
+        ctk.CTkButton(btn_frame, text="\u7A0D\u540E\u914D\u7F6E", command=on_skip, width=110, height=34,
+                       fg_color="transparent", border_width=1, border_color=BORDER,
+                       text_color=TEXT_PRIMARY, hover_color=CARD_BG,
+                       font=FONT_BODY).pack(side="left", padx=8)
+        ctk.CTkButton(btn_frame, text="\u5F00\u59CB\u4F7F\u7528", command=on_start, width=110, height=34,
+                       fg_color=PRIMARY_DARK, hover_color=PRIMARY,
+                       font=FONT_BTN_BOLD).pack(side="left", padx=8)

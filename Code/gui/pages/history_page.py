@@ -1,13 +1,16 @@
 import customtkinter as ctk
 
+from gui.theme import (
+    PRIMARY, PRIMARY_DARK, ERROR as RED, ACCENT_RED,
+    CARD_BG, BORDER, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_HINT,
+    FONT_BODY, FONT_CAPTION, CORNER_RADIUS_CARD,
+)
+from gui.components.widgets import PageHeader, PageDivider
 from service.history_service import HistoryService
 
 
 class HistoryPage(ctk.CTkScrollableFrame):
-    """历史记录页面。
-
-    提供历史日志列表、搜索、查看/打开/删除功能。
-    """
+    """历史记录页面。"""
 
     def __init__(self, master, history_svc: HistoryService, **kwargs):
         super().__init__(master, **kwargs)
@@ -17,38 +20,34 @@ class HistoryPage(ctk.CTkScrollableFrame):
         self._build_ui()
 
     def _build_ui(self) -> None:
-        """构建UI。"""
-        header = ctk.CTkFrame(self, fg_color="transparent")
-        header.pack(fill="x", padx=16, pady=(16, 8))
+        header = PageHeader(self, "历史记录", "推送日志与报告")
 
-        ctk.CTkLabel(
-            header, text="历史记录",
-            font=ctk.CTkFont(size=20, weight="bold"),
-        ).pack(side="left")
+        search_frame = ctk.CTkFrame(header.right_frame, fg_color="transparent")
+        search_frame.pack(side="right")
 
         self._search_entry = ctk.CTkEntry(
-            header, placeholder_text="🔍 搜索日志...", width=200,
+            search_frame, placeholder_text="搜索日志...", width=180, height=30,
         )
-        self._search_entry.pack(side="right", padx=(8, 0))
+        self._search_entry.pack(side="left", padx=(0, 4))
 
-        self._search_btn = ctk.CTkButton(
-            header, text="搜索", width=60,
+        ctk.CTkButton(
+            search_frame, text="搜索", width=60, height=30,
+            font=FONT_BODY, fg_color=PRIMARY_DARK, hover_color=PRIMARY,
             command=self._on_search,
-        )
-        self._search_btn.pack(side="right")
+        ).pack(side="left")
+
+        PageDivider(self)
 
         self._list_frame = ctk.CTkFrame(self, fg_color="transparent")
-        self._list_frame.pack(fill="both", expand=True, padx=16, pady=(0, 8))
+        self._list_frame.pack(fill="both", expand=True, padx=20, pady=(0, 8))
 
         self._pagination_frame = ctk.CTkFrame(self, fg_color="transparent")
-        self._pagination_frame.pack(fill="x", padx=16, pady=(0, 16))
+        self._pagination_frame.pack(fill="x", padx=20, pady=(0, 16))
 
     def refresh(self) -> None:
-        """刷新历史记录列表。"""
         self._load_page(self._current_page)
 
     def _load_page(self, page: int) -> None:
-        """加载指定页的数据。"""
         self._current_page = page
 
         for widget in self._list_frame.winfo_children():
@@ -62,31 +61,29 @@ class HistoryPage(ctk.CTkScrollableFrame):
 
         if not items:
             ctk.CTkLabel(
-                self._list_frame,
-                text="暂无历史记录",
-                font=ctk.CTkFont(size=13),
-                text_color=("gray50", "gray200"),
+                self._list_frame, text="暂无历史记录",
+                font=FONT_BODY, text_color=TEXT_HINT,
             ).pack(pady=40)
             return
 
         for item in items:
-            row = ctk.CTkFrame(self._list_frame, corner_radius=8)
+            row = ctk.CTkFrame(self._list_frame, corner_radius=CORNER_RADIUS_CARD,
+                               border_width=1, border_color=BORDER)
             row.pack(fill="x", pady=3)
 
             info_frame = ctk.CTkFrame(row, fg_color="transparent")
             info_frame.pack(fill="x", padx=12, pady=8)
 
             ctk.CTkLabel(
-                info_frame,
-                text=item.get("title", ""),
+                info_frame, text=item.get("title", ""),
                 font=ctk.CTkFont(size=13, weight="bold"),
+                text_color=TEXT_PRIMARY,
             ).pack(side="left")
 
             ctk.CTkLabel(
                 info_frame,
-                text=f"📅 {item.get('generated_at', '')[:10]}  |  📊 {item.get('repo_count', 0)} 个项目",
-                font=ctk.CTkFont(size=12),
-                text_color=("gray50", "gray200"),
+                text=f"{item.get('generated_at', '')[:10]}  |  {item.get('repo_count', 0)} 个项目",
+                font=FONT_CAPTION, text_color=TEXT_SECONDARY,
             ).pack(side="left", padx=12)
 
             btn_frame = ctk.CTkFrame(info_frame, fg_color="transparent")
@@ -97,20 +94,21 @@ class HistoryPage(ctk.CTkScrollableFrame):
 
             ctk.CTkButton(
                 btn_frame, text="打开", width=50, height=26,
-                font=ctk.CTkFont(size=11),
+                font=FONT_CAPTION, fg_color=PRIMARY_DARK, hover_color=PRIMARY,
                 command=lambda fp=file_path: self._svc.open_file(fp),
             ).pack(side="left", padx=2)
 
             ctk.CTkButton(
                 btn_frame, text="删除", width=50, height=26,
-                font=ctk.CTkFont(size=11),
-                fg_color=("#DA3633", "#b62324"),
+                font=FONT_CAPTION,
+                fg_color=(ACCENT_RED, "#b62324"), hover_color=(RED, ACCENT_RED),
                 command=lambda lid=log_id: self._confirm_delete(lid),
             ).pack(side="left", padx=2)
 
         if total_pages > 1:
             ctk.CTkButton(
-                self._pagination_frame, text="◀ 上一页", width=90,
+                self._pagination_frame, text="< 上一页", width=90, height=28,
+                font=FONT_CAPTION, fg_color=PRIMARY_DARK, hover_color=PRIMARY,
                 command=lambda: self._load_page(max(1, page - 1)),
                 state="normal" if page > 1 else "disabled",
             ).pack(side="left", padx=4)
@@ -118,17 +116,17 @@ class HistoryPage(ctk.CTkScrollableFrame):
             ctk.CTkLabel(
                 self._pagination_frame,
                 text=f"第 {page}/{total_pages} 页",
-                font=ctk.CTkFont(size=12),
+                font=FONT_CAPTION, text_color=TEXT_SECONDARY,
             ).pack(side="left", padx=8)
 
             ctk.CTkButton(
-                self._pagination_frame, text="下一页 ▶", width=90,
+                self._pagination_frame, text="下一页 >", width=90, height=28,
+                font=FONT_CAPTION, fg_color=PRIMARY_DARK, hover_color=PRIMARY,
                 command=lambda: self._load_page(min(total_pages, page + 1)),
                 state="normal" if page < total_pages else "disabled",
             ).pack(side="left", padx=4)
 
     def _on_search(self) -> None:
-        """搜索日志。"""
         keyword = self._search_entry.get().strip()
         if not keyword:
             self._load_page(1)
@@ -145,14 +143,14 @@ class HistoryPage(ctk.CTkScrollableFrame):
         if not items:
             ctk.CTkLabel(
                 self._list_frame,
-                text=f"未找到包含「{keyword}」的日志",
-                font=ctk.CTkFont(size=13),
-                text_color=("gray50", "gray200"),
+                text=f'未找到包含「{keyword}」的日志',
+                font=FONT_BODY, text_color=TEXT_HINT,
             ).pack(pady=40)
             return
 
         for item in items:
-            row = ctk.CTkFrame(self._list_frame, corner_radius=8)
+            row = ctk.CTkFrame(self._list_frame, corner_radius=CORNER_RADIUS_CARD,
+                               border_width=1, border_color=BORDER)
             row.pack(fill="x", pady=3)
 
             info_frame = ctk.CTkFrame(row, fg_color="transparent")
@@ -161,6 +159,7 @@ class HistoryPage(ctk.CTkScrollableFrame):
             ctk.CTkLabel(
                 info_frame, text=item.get("title", ""),
                 font=ctk.CTkFont(size=13, weight="bold"),
+                text_color=TEXT_PRIMARY,
             ).pack(side="left")
 
             log_id = item.get("id")
@@ -168,12 +167,11 @@ class HistoryPage(ctk.CTkScrollableFrame):
 
             ctk.CTkButton(
                 info_frame, text="打开", width=50, height=26,
-                font=ctk.CTkFont(size=11),
+                font=FONT_CAPTION, fg_color=PRIMARY_DARK, hover_color=PRIMARY,
                 command=lambda fp=file_path: self._svc.open_file(fp),
             ).pack(side="right", padx=2)
 
     def _confirm_delete(self, log_id: int) -> None:
-        """确认删除日志。"""
         dialog = ctk.CTkToplevel(self)
         dialog.title("确认删除")
         dialog.geometry("300x140")
@@ -181,7 +179,7 @@ class HistoryPage(ctk.CTkScrollableFrame):
         dialog.grab_set()
 
         ctk.CTkLabel(dialog, text="确定要删除此日志吗？\n将同时删除磁盘上的日志文件。",
-                     font=ctk.CTkFont(size=13)).pack(pady=(20, 16))
+                     font=FONT_BODY, text_color=TEXT_PRIMARY).pack(pady=(20, 16))
 
         btn_frame = ctk.CTkFrame(dialog, fg_color="transparent")
         btn_frame.pack(pady=8)
@@ -199,7 +197,9 @@ class HistoryPage(ctk.CTkScrollableFrame):
             dialog.grab_release()
             dialog.destroy()
 
-        ctk.CTkButton(btn_frame, text="取消", command=on_cancel, width=80,
-                       fg_color="transparent", border_width=1).pack(side="left", padx=8)
-        ctk.CTkButton(btn_frame, text="删除", command=on_delete, width=80,
-                       fg_color=("#DA3633", "#b62324")).pack(side="left", padx=8)
+        ctk.CTkButton(btn_frame, text="取消", command=on_cancel, width=80, height=30,
+                       fg_color="transparent", border_width=1, border_color=BORDER,
+                       text_color=TEXT_PRIMARY, font=FONT_BODY).pack(side="left", padx=8)
+        ctk.CTkButton(btn_frame, text="删除", command=on_delete, width=80, height=30,
+                       fg_color=(ACCENT_RED, "#b62324"), hover_color=(RED, ACCENT_RED),
+                       font=FONT_BODY).pack(side="left", padx=8)

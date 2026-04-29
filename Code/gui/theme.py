@@ -1,0 +1,67 @@
+import customtkinter as ctk
+
+PRIMARY = "#00B4D8"
+PRIMARY_DARK = "#0077B6"
+PRIMARY_LIGHT = "#48CAE4"
+
+SUCCESS = "#3FB950"
+WARNING = "#D29922"
+ERROR = "#F85149"
+
+SURFACE = ("#F8F9FA", "#0D1117")
+CARD_BG = ("#FFFFFF", "#161B22")
+CARD_HOVER = ("#F0F0F0", "#1C2128")
+SIDEBAR_BG = ("#F0F2F5", "#0D1117")
+BORDER = ("#D0D7DE", "#30363D")
+DIVIDER = ("#E8EAED", "#21262D")
+
+TEXT_PRIMARY = ("#1F2328", "#E6EDF3")
+TEXT_SECONDARY = ("#656D76", "#8B949E")
+TEXT_HINT = ("#8B949E", "#6E7681")
+
+ACCENT_GREEN = "#238636"
+ACCENT_PURPLE = "#8957E5"
+ACCENT_RED = "#DA3633"
+ACCENT_ORANGE = "#F0883E"
+
+SECTION_COLORS = {
+    "github": ACCENT_GREEN,
+    "evaluation": ACCENT_PURPLE,
+    "llm": PRIMARY,
+    "output": ACCENT_RED,
+    "app": ACCENT_ORANGE,
+}
+
+SECTION_ICONS = {
+    "github": "\u25C8",
+    "evaluation": "\u25C6",
+    "llm": "\u2B21",
+    "output": "\u25CE",
+    "app": "\u2699",
+}
+
+FONT_PAGE_TITLE = ctk.CTkFont(size=20, weight="bold")
+FONT_SECTION = ctk.CTkFont(size=14, weight="bold")
+FONT_BODY = ctk.CTkFont(size=12)
+FONT_CAPTION = ctk.CTkFont(size=11)
+FONT_BTN = ctk.CTkFont(size=12)
+FONT_BTN_BOLD = ctk.CTkFont(size=12, weight="bold")
+FONT_STAT_VALUE = ctk.CTkFont(size=28, weight="bold")
+FONT_STAT_TITLE = ctk.CTkFont(size=11)
+FONT_NAV = ctk.CTkFont(size=13)
+FONT_SIDEBAR_TITLE = ctk.CTkFont(size=13, weight="bold")
+FONT_STATUS = ctk.CTkFont(size=11)
+
+CORNER_RADIUS_CARD = 8
+CORNER_RADIUS_BTN = 6
+CORNER_RADIUS_ENTRY = 6
+
+PADDING_PAGE = 20
+PADDING_CARD = 16
+PADDING_SECTION = 12
+PADDING_FIELD = 6
+
+SIDEBAR_WIDTH = 180
+STATUSBAR_HEIGHT = 30
+BTN_HEIGHT = 32
+ENTRY_HEIGHT = 32

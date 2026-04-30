@@ -38,6 +38,19 @@ class HistoryService:
                 FileManager.delete_file(file_path)
             self.crud.delete_summary_log(log_id)
 
+    def get_history(self) -> list[dict]:
+        """获取历史记录列表（用于UI展示）。"""
+        rows, _ = self.crud.get_summary_logs(page=1, size=50)
+        result = []
+        for row in rows:
+            result.append({
+                "date": row.get("generated_at", ""),
+                "status": "success" if row.get("repo_count", 0) > 0 else "empty",
+                "pushed_count": row.get("repo_count", 0),
+                "repos": [],
+            })
+        return result
+
     @staticmethod
     def open_file(file_path: str) -> None:
         """用系统默认程序打开文件。"""
